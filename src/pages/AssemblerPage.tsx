@@ -4,7 +4,7 @@ import { Play } from "lucide-react";
 import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
 import { type LogMessage } from "../types/compiler";
-// import { AssemblerEngine } from "../compiler/assembler/AssemblerEngine";
+import { Assembler } from "../compiler/HackAssembler/Assembler";
 
 export function AssemblerPage() {
   // Localized states for the Assembler workspace
@@ -19,7 +19,7 @@ export function AssemblerPage() {
   const handleAssemble = () => {
     setLogs(prev => [...prev, { text: "Executing Assembler Pass 1 & Pass 2...", type: "info" }]);
     
-    const result = { success: true, errors: [], binary: ["1001010110110"]} // AssemblerEngine.assemble(asmCode);
+    const result = Assembler.assemble(asmCode);
 
     if (result.success) {
       setBinaryCode(result.binary.join("\n"));
