@@ -27,4 +27,11 @@ export class SymbolTable {
     }
     return address;
   }
+
+  public getEntries(): Array<{ symbol: string; address: number }> {
+    return Array.from(this.table.entries()).map(([symbol, address]) => ({
+      symbol,
+      address
+    }));
+  }
 }

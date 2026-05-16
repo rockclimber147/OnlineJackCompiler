@@ -6,21 +6,42 @@ export const InstructionType = {
 
 export type InstructionType = (typeof InstructionType)[keyof typeof InstructionType];
 
+export interface ParsedLine {
+  text: string;
+  originalLine: number;
+}
+
 export class Parser {
   /**
    * Strips all whitespace and comments from the raw source code.
    * Returns an array of clean, executable instruction lines.
    */
-  public static cleanCode(rawCode: string): string[] {
-    return rawCode
-      .split(/\r?\n/)
-      .map(line => {
-        // Remove comments (anything after //) and trim spaces
-        const commentIndex = line.indexOf("//");
-        const cleanLine = commentIndex !== -1 ? line.substring(0, commentIndex) : line;
-        return cleanLine.replace(/\s+/g, ""); // Strip all internal/external spaces
-      })
-      .filter(line => line.length > 0); // Remove empty lines
+  public static cleanCode(rawCode: string): ParsedLine[] {
+    const parsedLines: ParsedLine[] = [];
+    const lines = rawCode.split(/\r?\n/);
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      
+      // Remove comments
+      const commentIndex = line.indexOf("//");
+      if (commentIndex !== -1) {
+        line = line.substring(0, commentIndex);
+      }
+      
+      // Strip spaces
+      line = line.replace(/\s+/g, ""); 
+
+      // If line isn't empty, store it with its true line number (1-based index)
+      if (line.length > 0) {
+        parsedLines.push({
+          text: line,
+          originalLine: i + 1 
+        });
+      }
+    }
+
+    return parsedLines;
   }
 
   /**
