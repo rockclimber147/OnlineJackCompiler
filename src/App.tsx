@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Cpu, Binary, Wrench } from "lucide-react";
-import { type TabType } from "./types/compiler";
+import { type TabType } from "./types/Compiler";
 import { AssemblerPage } from "./pages/AssemblerPage";
 
 export default function App() {
