@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { Play } from "lucide-react";
 import { CodeDisplay } from "../components/CodeDisplay";
@@ -19,6 +19,18 @@ export function AssemblerPage() {
   const [logs, setLogs] = useState<LogMessage[]>([
     { text: "Assembler workspace initialized. Ready for source compilation.", type: "info" }
   ]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      const backgroundAssembler = new Assembler();
+      const result = backgroundAssembler.assemble(asmCode);
+      setCompilerErrors(result.errors);
+      
+    }, 500);
+
+    // Cleanup function cancels the timeout if the user keeps typing
+    return () => clearTimeout(debounceTimer);
+  }, [asmCode]);
 
   const handleAssemble = () => {
     setLogs(prev => [...prev, { text: "Executing Assembler Pass 1 & Pass 2...", type: "info" }]);

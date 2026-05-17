@@ -3,7 +3,6 @@ export const InstructionType = {
   C_INSTRUCTION: 1, // dest=comp;jump
   L_INSTRUCTION: 2, // (LABEL)
 } as const;
-
 export type InstructionType = (typeof InstructionType)[keyof typeof InstructionType];
 
 export interface ParsedLine {
