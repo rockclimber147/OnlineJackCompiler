@@ -7,9 +7,7 @@ import { type LogMessage } from "../types/compiler";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
 
 export function AssemblerPage() {
-  const [asmCode, setAsmCode] = useState<string>(
-    "// Example: Compute 2 + 3\n@2\nD=A\n@3\nD=D+A\n(END)\n@END\n0;JMP"
-  );
+  const [asmCode, setAsmCode] = useState<string>("");
   
   // Right Panel States
   const [activeRightTab, setActiveRightTab] = useState<"binary" | "symbols">("binary");
@@ -57,18 +55,10 @@ export function AssemblerPage() {
       ]);
     }
   };
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       
-      <div className="absolute top-2 right-6 z-50">
-        <button
-          onClick={handleAssemble}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer"
-        >
-          <Play size={12} fill="currentColor" /> Run Assembler
-        </button>
-      </div>
-
       <main className="flex-1 flex flex-col min-h-0 h-full">
         
         <div className="h-[75%] min-h-[200px] w-full shrink-0">
@@ -81,7 +71,7 @@ export function AssemblerPage() {
                 value={asmCode}
                 onChange={setAsmCode}
                 language="hackasm"
-                errors={compilerErrors} // <--- Pass them down here!
+                errors={compilerErrors} 
               />
             </Panel>
 
@@ -90,28 +80,40 @@ export function AssemblerPage() {
             {/* Right Side: Tabbed Viewer */}
             <Panel className="bg-[#252526] min-w-[150px] flex flex-col">
               
-              {/* VS Code Style Tab Bar */}
-              <div className="flex bg-[#1e1e1e] border-b border-black/40 shrink-0">
-                <button
-                  onClick={() => setActiveRightTab("binary")}
-                  className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${
-                    activeRightTab === "binary"
-                      ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500"
-                      : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"
-                  }`}
-                >
-                  BINARY (.hack)
-                </button>
-                <button
-                  onClick={() => setActiveRightTab("symbols")}
-                  className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${
-                    activeRightTab === "symbols"
-                      ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500"
-                      : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"
-                  }`}
-                >
-                  SYMBOL TABLE
-                </button>
+              {/* VS Code Style Tab Bar - NOW WITH BUTTON ALIGNED INSIDE */}
+              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-black/40 shrink-0">
+                <div className="flex">
+                  <button
+                    onClick={() => setActiveRightTab("binary")}
+                    className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${
+                      activeRightTab === "binary"
+                        ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500"
+                        : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"
+                    }`}
+                  >
+                    BINARY (.hack)
+                  </button>
+                  <button
+                    onClick={() => setActiveRightTab("symbols")}
+                    className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${
+                      activeRightTab === "symbols"
+                        ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500"
+                        : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"
+                    }`}
+                  >
+                    SYMBOL TABLE
+                  </button>
+                </div>
+
+                {/* Moved the Run Button here */}
+                <div className="px-3">
+                  <button
+                    onClick={handleAssemble}
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer"
+                  >
+                    <Play size={12} fill="currentColor" /> Run Assembler
+                  </button>
+                </div>
               </div>
 
               {/* Tab Content Area */}
