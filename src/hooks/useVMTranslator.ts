@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { type LogMessage, type CompilerError } from "../types/Compiler";
 import { type VirtualFile } from "../types/Vfs";
 import { VMTranslator } from "../compiler/VMTranslator/VMTranslator";
+import type { VMSymbol } from "../compiler/VMTranslator/SymbolTable";
 
 export function useVMTranslator(files: VirtualFile[]) {
   const [asmCode, setAsmCode] = useState<string>("// Translated assembly code will appear here");
   const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);
+  const [symbols, setSymbols] = useState<VMSymbol[]>([]);
   const [logs, setLogs] = useState<LogMessage[]>([
     { text: "VM Translator workspace initialized. Ready for translation.", type: "info" }
   ]);
@@ -13,6 +15,7 @@ export function useVMTranslator(files: VirtualFile[]) {
   useEffect(() => {
     if (!files || files.length === 0) {
       setCompilerErrors([]);
+      setSymbols([]);
       return;
     }
 
@@ -20,7 +23,8 @@ export function useVMTranslator(files: VirtualFile[]) {
       const translator = new VMTranslator();
       const result = translator.translateAll(files);
       setCompilerErrors(result.errors);
-    }, 500); // 500ms debounce
+      setSymbols(result.symbols);
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [files]);
@@ -47,5 +51,5 @@ export function useVMTranslator(files: VirtualFile[]) {
     }
   };
 
-  return { asmCode, logs, compilerErrors, addLog, clearLogs, runTranslate };
+  return { asmCode, logs, compilerErrors, symbols, addLog, clearLogs, runTranslate };
 }
