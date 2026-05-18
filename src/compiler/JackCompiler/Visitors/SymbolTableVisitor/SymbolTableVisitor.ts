@@ -4,7 +4,7 @@ import type {
   JackSubroutineNode,
   JackSubroutineVarDecNode,
 } from '../../AST';
-import { JackSpec } from '../../JackSpec';
+import { JackSpec } from '../../../../languages/jack/JackSpec';
 import { JackVisitorTopLevel } from '../JackVisitorBase';
 import { ClassLevelTable, GlobalSymbolTable } from './SymbolTable';
 import { SymbolKind } from './types';
