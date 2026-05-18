@@ -1,7 +1,7 @@
 import { useRef } from "react";
 // --- NEW: Import Pencil and Trash2 icons ---
 import { FileCode2, FolderOpen, FilePlus, Upload, Pencil, Trash2 } from "lucide-react";
-import { type VirtualFile } from "../types/vfs";
+import { type VirtualFile } from "../types/Vfs";
 
 interface FileExplorerProps {
   files: VirtualFile[];

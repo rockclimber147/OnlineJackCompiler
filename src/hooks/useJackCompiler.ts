@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type LogMessage } from "../types/Compiler";
-import { type VirtualFile } from "../types/vfs";
+import { type VirtualFile } from "../types/Vfs";
 
 export function useJackCompiler() {
   const [compiledFiles, setCompiledFiles] = useState<VirtualFile[]>([]);

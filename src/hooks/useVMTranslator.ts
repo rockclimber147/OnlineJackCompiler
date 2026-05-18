@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type LogMessage } from "../types/Compiler";
-import { type VirtualFile } from "../types/vfs";
+import { type VirtualFile } from "../types/Vfs";
+import { VMTranslator } from "../compiler/VMTranslator/VMTranslator"; // <-- Import engine
 
 export function useVMTranslator() {
   const [asmCode, setAsmCode] = useState<string>("// Translated assembly code will appear here");
@@ -16,10 +17,17 @@ export function useVMTranslator() {
     
     addLog(`Translating ${files.length} .vm file(s)...`, "info");
     
-    setTimeout(() => {
-      setAsmCode(`// Translated from ${files.length} file(s)\n// Bootstrap Code\n@256\nD=A\n@SP\nM=D\n// ... rest of translation`);
-      addLog(`[Success] Translated ${files.length} files into single ASM output.`, "success");
-    }, 500);
+    const translator = new VMTranslator();
+    const result = translator.translateAll(files);
+
+    if (result.success) {
+      setAsmCode(result.asmOutput);
+      addLog(`[Success] Translated ${files.length} files successfully.`, "success");
+    } else {
+      setAsmCode("// Translation Failed");
+      addLog("[Build Failure] Translation failed with errors:", "error");
+      result.errors.forEach(err => addLog(` -> ${err}`, "error"));
+    }
   };
 
   return { asmCode, logs, addLog, clearLogs, runTranslate };
