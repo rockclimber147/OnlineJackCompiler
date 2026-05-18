@@ -1,34 +1,43 @@
-import { useState } from "react";
-import { type LogMessage } from "../types/Compiler";
+import { useState, useEffect } from "react";
+import { type LogMessage, type CompilerError } from "../types/Compiler";
 import { type VirtualFile } from "../types/Vfs";
+import { JackCompiler } from "../compiler/JackCompiler/JackCompiler";
 
-export function useJackCompiler() {
-  const [compiledFiles, setCompiledFiles] = useState<VirtualFile[]>([]);
+export function useJackCompiler(files: VirtualFile[]) {
+  const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);
   const [logs, setLogs] = useState<LogMessage[]>([
-    { text: "Jack Compiler workspace initialized. Ready to compile.", type: "info" }
+    { text: "Jack Compiler workspace initialized. Ready for syntax checking.", type: "info" }
   ]);
 
   const addLog = (text: string, type: LogMessage["type"]) => setLogs(prev => [...prev, { text, type }]);
   const clearLogs = () => setLogs([]);
 
-  const runCompile = (jackFiles: VirtualFile[]) => {
-    if (jackFiles.length === 0) return;
-    
-    addLog(`Compiling ${jackFiles.length} .jack file(s)...`, "info");
-    
-    // Simulate compilation
-    setTimeout(() => {
-      const outputFiles: VirtualFile[] = jackFiles.map(file => ({
-        id: crypto.randomUUID(),
-        name: file.name.replace(".jack", ".vm"),
-        language: "plaintext",
-        content: `// Compiled VM code for ${file.name}\npush constant 0\nreturn`
-      }));
+  useEffect(() => {
+    if (!files || files.length === 0) {
+      setCompilerErrors([]);
+      return;
+    }
 
-      setCompiledFiles(outputFiles);
-      addLog(`[Success] Compiled ${jackFiles.length} files successfully.`, "success");
-    }, 600);
+    const timeoutId = setTimeout(() => {
+      const compiler = new JackCompiler();
+      const result = compiler.compileAll(files);
+      setCompilerErrors(result.errors);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [files]);
+
+  const runCompile = () => {
+    if (files.length === 0) return;
+    const compiler = new JackCompiler();
+    const result = compiler.compileAll(files);
+
+    if (result.success) {
+      addLog(`[Success] Parsed ${files.length} Jack files with 0 syntax errors.`, "success");
+    } else {
+      addLog(`[Build Failure] Found ${result.errors.length} syntax errors.`, "error");
+    }
   };
 
-  return { compiledFiles, logs, addLog, clearLogs, runCompile };
+  return { logs, compilerErrors, addLog, clearLogs, runCompile };
 }

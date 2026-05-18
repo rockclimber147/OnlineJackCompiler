@@ -1,6 +1,6 @@
 import { type Token } from './JackCompiler/Token';
 
-export class CompilerError extends Error {
+export class JackCompilerError extends Error {
   public readonly token: Token; // <-- Explicitly declared field
   public readonly line: number;
   public readonly column: number;
@@ -19,6 +19,6 @@ export class CompilerError extends Error {
     this.column = token.column;
     this.lexeme = token.lexeme;
 
-    Object.setPrototypeOf(this, CompilerError.prototype);
+    Object.setPrototypeOf(this, JackCompilerError.prototype);
   }
 }

@@ -1,5 +1,5 @@
 import { type Token } from './Token';
-import { CompilerError } from '../Errors';
+import { JackCompilerError } from '../Errors';
 import { TokenType } from './Token';
 
 export class TokenValidator {
@@ -50,7 +50,7 @@ export class TokenValidator {
   }
 
   public throwCompilerError(t: Token, message: string): never {
-    throw new CompilerError(t, message);
+    throw new JackCompilerError(t, message);
   }
 
   public advance(): Token {

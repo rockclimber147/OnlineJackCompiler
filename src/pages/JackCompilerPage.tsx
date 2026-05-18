@@ -9,6 +9,7 @@ import { FileExplorer } from "../components/FileExplorer";
 import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
+import { type VirtualFile } from "../types/Vfs";
 
 export function JackCompilerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
@@ -26,11 +27,18 @@ export function JackCompilerPage() {
     }]
   });
 
-  const { compiledFiles, logs, addLog, runCompile } = useJackCompiler();
+  const { logs, compilerErrors, addLog, runCompile } = useJackCompiler(files);
 
+  // Filter errors for the specific file currently open in the editor
+  const activeFileErrors = compilerErrors.filter(err => 
+    activeFile && err.message.startsWith(`[${activeFile.name}]`)
+  );
+
+  // TODO: Replace with actual code generation visitor output later
+  const compiledFiles: VirtualFile[] = [];
   const activeCompiledFile = compiledFiles.find(f => f.id === activeCompiledFileId) || compiledFiles[0];
 
-  const handleCompileClick = () => runCompile(files);
+  const handleCompileClick = () => runCompile();
 
   const handleCopyClick = async (text: string) => {
     const success = await copyToClipboard(text);
@@ -55,6 +63,7 @@ export function JackCompilerPage() {
                 onDeleteFile={deleteFile}
                 title="JACK FILES"
                 acceptedExtensions=".jack"
+                errors={compilerErrors} // <-- Hooked up global errors here
               />
             </Panel>
 
@@ -68,6 +77,7 @@ export function JackCompilerPage() {
                   value={activeFile.content}
                   language={activeFile.language}
                   onChange={updateActiveFile}
+                  errors={activeFileErrors} // <-- Hooked up local file errors here
                   actions={
                     <>
                       <button onClick={() => handleCopyClick(activeFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
@@ -90,18 +100,18 @@ export function JackCompilerPage() {
             <Panel defaultSize={50} minSize={30} className="bg-[#252526] flex flex-col">
               
               {/* Tab Bar & Compile Button */}
-              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-black/40 shrink-0">
-                <div className="flex">
-                  <button onClick={() => setActiveRightTab("vm")} className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${activeRightTab === "vm" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"}`}>
+              <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-black/40 shrink-0 h-[34px]">
+                <div className="flex h-full">
+                  <button onClick={() => setActiveRightTab("vm")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "vm" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
                     VM OUTPUT
                   </button>
-                  <button onClick={() => setActiveRightTab("ast")} className={`px-4 py-2 text-xs font-medium border-r border-black/40 transition-colors ${activeRightTab === "ast" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 hover:bg-[#2a2a2b] border-t-2 border-t-transparent"}`}>
+                  <button onClick={() => setActiveRightTab("ast")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "ast" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
                     AST (XML)
                   </button>
                 </div>
 
                 <div className="flex items-center px-3">
-                  <button onClick={handleCompileClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
+                  <button onClick={handleCompileClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-md text-[11px] font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
                     <Play size={12} fill="currentColor" /> Compile Jack
                   </button>
                 </div>
@@ -117,7 +127,8 @@ export function JackCompilerPage() {
                         files={compiledFiles}
                         activeFileId={activeCompiledFile?.id || null}
                         onSelectFile={setActiveCompiledFileId}
-                        onAddFile={() => {}} onUploadFiles={() => {}} // Disabled
+                        onAddFile={() => {}} 
+                        onUploadFiles={() => {}} 
                         title="COMPILED VM"
                         onRenameFile={() => {}}
                         onDeleteFile={() => {}}
@@ -149,7 +160,7 @@ export function JackCompilerPage() {
                     </Panel>
                   </Group>
                 ) : (
-                  <div className="p-6 text-slate-400 italic text-sm">AST Viewer not yet implemented.</div>
+                  <div className="flex h-full items-center justify-center text-slate-500 text-sm italic">AST Viewer not yet implemented.</div>
                 )}
               </div>
             </Panel>
@@ -159,7 +170,7 @@ export function JackCompilerPage() {
 
         <div className="h-1 bg-black/30 border-y border-slate-800/40 w-full shrink-0" />
         <div className="flex-1 min-h-[100px] w-full bg-[#1e1e1e]">
-          <Console logs={logs} />
+          <Console logs={logs} /> {/* Hooked up clearLogs here */}
         </div>
       </main>
     </div>
