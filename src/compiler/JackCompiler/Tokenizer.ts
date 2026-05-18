@@ -1,5 +1,5 @@
-import { TokenType, JackTokenMatcher } from "../../languages/jack/JackSpec";
-import type { Token } from "./Token";
+import { JackTokenMatcher } from "../../languages/jack/JackSpec";
+import { TokenType, type Token } from "./Token";
 
 export class JackTokenizer {
   private input: string;

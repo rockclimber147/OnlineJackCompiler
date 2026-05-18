@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { JackTokenizer } from './Tokenizer'; 
-import { TokenType } from '../../languages/jack/JackSpec';
+import { TokenType } from './Token';
 import type { Token } from './Token';
 
 describe('Jack Tokenizer', () => {

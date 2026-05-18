@@ -1,17 +1,4 @@
-// --- REWRITTEN: Erasable Syntax pattern for Enums ---
-export const TokenType = {
-  KEYWORD: 'KEYWORD',
-  SYMBOL: 'SYMBOL',
-  IDENTIFIER: 'IDENTIFIER',
-  INT: 'INT',
-  STRING: 'STRING',
-  NEWLINE: 'NEWLINE',
-  SKIP: 'SKIP',
-  EOF: 'EOF',
-} as const;
-
-export type TokenType = typeof TokenType[keyof typeof TokenType];
-// ---------------------------------------------------
+import { TokenType } from "../../compiler/JackCompiler/Token";
 
 export const JackTokenMatcher: [RegExp, TokenType][] = [
   [/^\/\/.*/, TokenType.SKIP],
