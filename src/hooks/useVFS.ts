@@ -3,10 +3,9 @@ import { type VirtualFile } from "../types/Vfs";
 
 interface UseVFSProps {
   initialFiles?: VirtualFile[];
-  onLog?: (msg: string, type: "info" | "success" | "error") => void;
 }
 
-export function useVFS({ initialFiles = [], onLog }: UseVFSProps = {}) {
+export function useVFS({ initialFiles = [] }: UseVFSProps = {}) {
   const [files, setFiles] = useState<VirtualFile[]>(initialFiles);
   const [activeFileId, setActiveFileId] = useState<string | null>(initialFiles[0]?.id || null);
 
@@ -29,7 +28,13 @@ export function useVFS({ initialFiles = [], onLog }: UseVFSProps = {}) {
     setFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: newContent } : f));
   };
 
-  const uploadFiles = async (fileList: FileList, allowedExtension: string, defaultLanguage: string = "plaintext") => {
+  // NEW: Accept onLog directly in the action function, not at hook initialization
+  const uploadFiles = async (
+    fileList: FileList, 
+    allowedExtension: string, 
+    defaultLanguage: string = "plaintext",
+    onLog?: (msg: string, type: "info" | "success" | "error") => void
+  ) => {
     const validFiles = Array.from(fileList).filter(file => file.name.endsWith(allowedExtension));
     
     if (validFiles.length === 0) {

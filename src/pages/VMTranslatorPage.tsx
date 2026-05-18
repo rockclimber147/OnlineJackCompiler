@@ -15,12 +15,11 @@ export function VMTranslatorPage() {
     asmCode, logs, addLog, runTranslate 
   } = useVMTranslator();
 
-  // 2. Initialize File System Hook (Configured for .vm files)
+  // 2. Initialize File System Hook (Configured for .vm files, NO onLog here)
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles 
   } = useVFS({
-    onLog: addLog,
     initialFiles: [{
       id: crypto.randomUUID(),
       name: "Main.vm",
@@ -31,7 +30,7 @@ export function VMTranslatorPage() {
 
   // --- Handlers ---
   const handleTranslateClick = () => {
-    // A VM Translator usually needs all files in the directory to link them properly
+    // A VM Translator needs all files in the directory to link them properly
     runTranslate(files); 
   };
 
@@ -53,7 +52,8 @@ export function VMTranslatorPage() {
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
                 onAddFile={(name) => addFile(name, ".vm", "plaintext")}
-                onUploadFiles={(fl) => uploadFiles(fl, ".vm", "plaintext")}
+                // Pass addLog dynamically to the upload function!
+                onUploadFiles={(fl) => uploadFiles(fl, ".vm", "plaintext", addLog)}
                 title="VM FILES"
                 acceptedExtensions=".vm"
               />
@@ -113,7 +113,7 @@ export function VMTranslatorPage() {
                 <CodeDisplay
                   title="COMBINED OUTPUT" 
                   value={asmCode}
-                  language="hackasm" // Render the output with your custom Hack syntax highlighting!
+                  language="hackasm" // Output uses your custom ASM highlighting!
                   readOnly={true}
                   actions={
                     <button onClick={() => handleCopyClick(asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">

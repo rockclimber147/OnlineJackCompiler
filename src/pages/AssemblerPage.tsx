@@ -13,18 +13,10 @@ import { copyToClipboard, downloadFile } from "../utils/FileActions";
 export function AssemblerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"binary" | "symbols">("binary");
 
-  // 1. Initialize Compiler Hook
-  const { 
-    binaryCode, symbolTableData, compilerErrors, logs, 
-    addLog, runAssemble 
-  } = useAssembler();
-
-  // 2. Initialize File System Hook
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles 
   } = useVFS({
-    onLog: addLog,
     initialFiles: [{
       id: crypto.randomUUID(),
       name: "Example.asm",
@@ -33,8 +25,10 @@ export function AssemblerPage() {
     }]
   });
 
-  // Ensure the background checker gets the active content
-  useAssembler(activeFile?.content); 
+  const { 
+    binaryCode, symbolTableData, compilerErrors, logs, 
+    addLog, runAssemble 
+  } = useAssembler(activeFile?.content);
 
   // --- Handlers ---
   const handleCompileClick = () => {
@@ -61,7 +55,7 @@ export function AssemblerPage() {
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
                 onAddFile={(name) => addFile(name, ".asm", "hackasm")}
-                onUploadFiles={(fl) => uploadFiles(fl, ".asm", "hackasm")}
+                onUploadFiles={(fl) => uploadFiles(fl, ".asm", "hackasm", addLog)} 
                 title="WORKSPACE"
                 acceptedExtensions=".asm,.txt"
               />
