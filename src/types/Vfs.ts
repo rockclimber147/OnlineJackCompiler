@@ -3,4 +3,5 @@ export interface VirtualFile {
   name: string;
   content: string;
   language: string;
+  hasError?: boolean;
 }

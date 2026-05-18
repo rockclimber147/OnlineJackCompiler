@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { type LogMessage } from "../types/Compiler";
-import { type VirtualFile } from "../types/Vfs";
+import { type VirtualFile } from "../types/vfs";
 
 export function useVMTranslator() {
   const [asmCode, setAsmCode] = useState<string>("// Translated assembly code will appear here");

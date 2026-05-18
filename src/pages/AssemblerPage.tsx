@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { Play, Copy, Download } from "lucide-react";
 
@@ -15,7 +15,7 @@ export function AssemblerPage() {
 
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
-    addFile, updateActiveFile, uploadFiles 
+    addFile, updateActiveFile, uploadFiles, setFileError, renameFile, deleteFile
   } = useVFS({
     initialFiles: [{
       id: crypto.randomUUID(),
@@ -42,6 +42,12 @@ export function AssemblerPage() {
     if (success) addLog("Copied to clipboard.", "success");
   };
 
+  useEffect(() => {
+    if (activeFileId) {
+      setFileError(activeFileId, compilerErrors.length > 0);
+    }
+  }, [compilerErrors, activeFileId]);
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -56,6 +62,8 @@ export function AssemblerPage() {
                 onSelectFile={setActiveFileId}
                 onAddFile={(name) => addFile(name, ".asm", "hackasm")}
                 onUploadFiles={(fl) => uploadFiles(fl, ".asm", "hackasm", addLog)} 
+                onRenameFile={renameFile} // <-- Wire it up
+                onDeleteFile={deleteFile}
                 title="WORKSPACE"
                 acceptedExtensions=".asm,.txt"
               />

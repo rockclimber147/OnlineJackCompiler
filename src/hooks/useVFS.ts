@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type VirtualFile } from "../types/Vfs";
+import { type VirtualFile } from "../types/vfs";
 
 interface UseVFSProps {
   initialFiles?: VirtualFile[];
@@ -26,6 +26,10 @@ export function useVFS({ initialFiles = [] }: UseVFSProps = {}) {
   const updateActiveFile = (newContent: string) => {
     if (!activeFileId) return;
     setFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: newContent } : f));
+  };
+
+  const setFileError = (fileId: string, hasError: boolean) => {
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, hasError } : f));
   };
 
   // NEW: Accept onLog directly in the action function, not at hook initialization
@@ -70,5 +74,17 @@ export function useVFS({ initialFiles = [] }: UseVFSProps = {}) {
     }
   };
 
-  return { files, activeFileId, setActiveFileId, activeFile, addFile, updateActiveFile, uploadFiles };
+  const renameFile = (id: string, newName: string) => {
+    setFiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f));
+  };
+
+  const deleteFile = (id: string) => {
+    setFiles(prev => prev.filter(f => f.id !== id));
+    
+    // If the user deletes the file they are currently looking at, clear the editor
+    if (activeFileId === id) {
+      setActiveFileId(null);
+    }
+  };
+  return { files, activeFileId, setActiveFileId, activeFile, addFile, updateActiveFile, uploadFiles, setFileError, renameFile, deleteFile };
 }

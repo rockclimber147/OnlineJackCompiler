@@ -18,7 +18,7 @@ export function VMTranslatorPage() {
   // 2. Initialize File System Hook (Configured for .vm files, NO onLog here)
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
-    addFile, updateActiveFile, uploadFiles 
+    addFile, updateActiveFile, uploadFiles, renameFile, deleteFile
   } = useVFS({
     initialFiles: [{
       id: crypto.randomUUID(),
@@ -52,8 +52,9 @@ export function VMTranslatorPage() {
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
                 onAddFile={(name) => addFile(name, ".vm", "plaintext")}
-                // Pass addLog dynamically to the upload function!
                 onUploadFiles={(fl) => uploadFiles(fl, ".vm", "plaintext", addLog)}
+                onRenameFile={renameFile}
+                onDeleteFile={deleteFile}
                 title="VM FILES"
                 acceptedExtensions=".vm"
               />
