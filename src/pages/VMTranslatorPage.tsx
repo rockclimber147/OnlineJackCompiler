@@ -49,6 +49,7 @@ export function VMTranslatorPage() {
                 onDeleteFile={deleteFile}
                 title="VM FILES"
                 acceptedExtensions=".vm"
+                errors={compilerErrors}
               />
             </Panel>
 

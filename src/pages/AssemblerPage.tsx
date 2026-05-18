@@ -61,6 +61,7 @@ export function AssemblerPage() {
                 onDeleteFile={deleteFile}
                 title="WORKSPACE"
                 acceptedExtensions=".asm,.txt"
+                errors={compilerErrors}
               />
             </Panel>
 

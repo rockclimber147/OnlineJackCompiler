@@ -1,7 +1,7 @@
-import { useRef } from "react";
-// --- NEW: Import Pencil and Trash2 icons ---
-import { FileCode2, FolderOpen, FilePlus, Upload, Pencil, Trash2 } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { FileCode2, Trash2, Pencil, Upload, FolderOpen, FilePlus } from "lucide-react";
 import { type VirtualFile } from "../types/Vfs";
+import { type CompilerError } from "../types/Compiler";
 
 interface FileExplorerProps {
   files: VirtualFile[];
@@ -9,12 +9,12 @@ interface FileExplorerProps {
   onSelectFile: (id: string) => void;
   onAddFile: (name: string) => void;
   onUploadFiles: (files: FileList) => void;
-  // --- NEW: Add the action props ---
-  onRenameFile?: (id: string, newName: string) => void;
-  onDeleteFile?: (id: string) => void;
+  onRenameFile: (id: string, newName: string) => void;
+  onDeleteFile: (id: string) => void;
   title?: string;
-  acceptedExtensions?: string; 
+  acceptedExtensions?: string;
   readOnly?: boolean;
+  errors?: CompilerError[]; 
 }
 
 export function FileExplorer({
@@ -23,53 +23,101 @@ export function FileExplorer({
   onSelectFile,
   onAddFile,
   onUploadFiles,
-  onRenameFile,  
-  onDeleteFile, 
+  onRenameFile,
+  onDeleteFile,
   title = "EXPLORER",
-  acceptedExtensions,
-  readOnly = false
+  acceptedExtensions = ".txt",
+  readOnly = false,
+  errors = [], 
 }: FileExplorerProps) {
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
+  // Focus the input automatically when entering edit mode
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      // Select the text before the extension
+      const dotIndex = editName.lastIndexOf(".");
+      if (dotIndex > 0) {
+        editInputRef.current.setSelectionRange(0, dotIndex);
+      } else {
+        editInputRef.current.select();
+      }
+    }
+  }, [editingId]);
 
   const handleManualAdd = () => {
-    const name = prompt("Enter new file name (e.g., Main.jack):");
-    if (name) onAddFile(name);
+    const baseName = "NewFile";
+    let name = baseName + acceptedExtensions;
+    let counter = 1;
+    // Prevent duplicate default names
+    while (files.some(f => f.name === name)) {
+      name = `${baseName}${counter}${acceptedExtensions}`;
+      counter++;
+    }
+    onAddFile(name);
   };
-
 
   const handleRename = (e: React.MouseEvent, file: VirtualFile) => {
-    e.stopPropagation(); // Prevents the row from being "clicked" (selecting the file)
-    const newName = prompt("Rename file to:", file.name);
-    if (newName && newName.trim() !== "" && newName !== file.name) {
-      onRenameFile?.(file.id, newName);
-    }
+    e.stopPropagation();
+    setEditingId(file.id);
+    setEditName(file.name);
   };
 
-  const handleDelete = (e: React.MouseEvent, file: VirtualFile) => {
-    e.stopPropagation();
-    if (confirm(`Are you sure you want to delete '${file.name}'?`)) {
-      onDeleteFile?.(file.id);
+  const submitRename = (id: string) => {
+    if (editName.trim() && !files.some(f => f.id !== id && f.name === editName.trim())) {
+      onRenameFile(id, editName.trim());
     }
+    setEditingId(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === "Enter") submitRename(id);
+    if (e.key === "Escape") setEditingId(null);
   };
 
   return (
     <div className="flex flex-col h-full bg-[#181818] border-r border-black/40 select-none">
       
-      {/* Hidden File Inputs */}
-      <input type="file" multiple accept={acceptedExtensions} ref={fileInputRef} className="hidden" onChange={(e) => e.target.files && onUploadFiles(e.target.files)} />
-      {/* @ts-ignore */}
-      <input type="file" webkitdirectory="" directory="" ref={folderInputRef} className="hidden" onChange={(e) => e.target.files && onUploadFiles(e.target.files)} />
+      {/* Hidden Inputs for File Uploading */}
+      <input 
+        type="file" 
+        multiple 
+        accept={acceptedExtensions}
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={(e) => e.target.files && onUploadFiles(e.target.files)} 
+      />
+      
+      <input 
+        type="file" 
+        // @ts-expect-error - webkitdirectory is a non-standard but widely supported attribute for folder upload
+        webkitdirectory="true" 
+        className="hidden" 
+        ref={folderInputRef} 
+        onChange={(e) => e.target.files && onUploadFiles(e.target.files)} 
+      />
 
-      {/* Header & Actions */}
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 tracking-wider">
         <span>{title}</span>
-        {/* 3. Hide the add/upload buttons if readOnly is true */}
         {!readOnly && (
           <div className="flex items-center gap-1">
-            <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="New File"><FilePlus size={14} /></button>
-            <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Files"><Upload size={14} /></button>
-            <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Folder"><FolderOpen size={14} /></button>
+            <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="New File">
+              <FilePlus size={14} />
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Files">
+              <Upload size={14} />
+            </button>
+            <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Folder">
+              <FolderOpen size={14} />
+            </button>
           </div>
         )}
       </div>
@@ -81,51 +129,78 @@ export function FileExplorer({
             No files in workspace.
           </div>
         ) : (
-          files.map(file => (
-            // --- UPDATED: Changed from <button> to <div className="group"> ---
-            <div
-              key={file.id}
-              onClick={() => onSelectFile(file.id)}
-              className={`group flex items-center justify-between w-full px-3 py-1.5 text-sm cursor-pointer transition-colors ${
-                activeFileId === file.id 
-                  ? "bg-[#37373d] text-white" 
-                  : "text-slate-400 hover:bg-[#2a2d2e] hover:text-slate-300"
-              }`}
-            >
-              {/* File Icon & Name */}
-              <div className="flex items-center gap-2 overflow-hidden">
-                <FileCode2 
-                  size={14} 
-                  className={`shrink-0 ${
-                    file.hasError ? "text-rose-500" : activeFileId === file.id ? "text-indigo-400" : "text-slate-500"
-                  }`} 
-                />
-                <span className={`truncate ${file.hasError && activeFileId !== file.id ? "text-rose-400" : ""}`}>
-                  {file.name}
-                </span>
-                {file.hasError && <div className="shrink-0 w-2 h-2 rounded-full bg-rose-500" title="Contains errors" />}
-              </div>
+          files.map(file => {
+            // Dynamically check if this file has project-wide errors
+            const hasError = errors.some(err => err.message.startsWith(`[${file.name}]`));
 
-              {/* --- NEW: Hover Action Buttons --- */}
-              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={(e) => handleRename(e, file)} 
-                  className="p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
-                  title="Rename"
-                >
-                  <Pencil size={12} />
-                </button>
-                <button 
-                  onClick={(e) => handleDelete(e, file)} 
-                  className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded transition-colors"
-                  title="Delete"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
+            return (
+              <div
+                key={file.id}
+                onClick={() => {
+                  if (editingId !== file.id) onSelectFile(file.id);
+                }}
+                className={`group flex items-center justify-between w-full px-3 py-1.5 text-sm cursor-pointer transition-colors ${
+                  activeFileId === file.id 
+                    ? "bg-[#37373d] text-white" 
+                    : "text-slate-400 hover:bg-[#2a2d2e] hover:text-slate-300"
+                }`}
+              >
+                {/* File Icon & Name */}
+                <div className="flex items-center gap-2 overflow-hidden flex-1">
+                  <FileCode2 
+                    size={14} 
+                    className={`shrink-0 ${
+                      hasError ? "text-rose-500" : activeFileId === file.id ? "text-indigo-400" : "text-slate-500"
+                    }`} 
+                  />
+                  
+                  {/* Inline Renaming Input vs Static Text */}
+                  {editingId === file.id ? (
+                    <input
+                      ref={editInputRef}
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onBlur={() => submitRename(file.id)}
+                      onKeyDown={(e) => handleKeyDown(e, file.id)}
+                      className="flex-1 bg-[#1e1e1e] text-slate-200 text-sm px-1 border border-indigo-500 rounded outline-none min-w-0"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <>
+                      <span className={`truncate ${hasError && activeFileId !== file.id ? "text-rose-400" : ""}`}>
+                        {file.name}
+                      </span>
+                      {hasError && <div className="shrink-0 w-2 h-2 rounded-full bg-rose-500" title="Contains errors" />}
+                    </>
+                  )}
+                </div>
 
-            </div>
-          ))
+                {/* Hover Actions (Only show if not readonly and not currently editing) */}
+                {!readOnly && editingId !== file.id && (
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                    <button 
+                      onClick={(e) => handleRename(e, file)} 
+                      className="p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+                      title="Rename"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteFile(file.id);
+                      }} 
+                      className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            );
+          })
         )}
       </div>
     </div>

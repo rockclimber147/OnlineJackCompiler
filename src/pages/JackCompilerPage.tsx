@@ -119,7 +119,9 @@ export function JackCompilerPage() {
                         onSelectFile={setActiveCompiledFileId}
                         onAddFile={() => {}} onUploadFiles={() => {}} // Disabled
                         title="COMPILED VM"
-                        readOnly={true} // <--- Makes the explorer read-only!
+                        onRenameFile={() => {}}
+                        onDeleteFile={() => {}}
+                        readOnly={true}
                       />
                     </Panel>
                     <Separator className="w-1 bg-black/20 hover:bg-indigo-600 transition-colors cursor-col-resize" />
