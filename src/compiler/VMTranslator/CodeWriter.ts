@@ -22,10 +22,10 @@ export class CodeWriter {
 
     if (command === "add" || command === "sub" || command === "and" || command === "or") {
       this.output.push("@SP", "AM=M-1", "D=M", "A=A-1");
-      if (command === "add") this.output.push("M=M+D");
+      if (command === "add") this.output.push("M=D+M");
       if (command === "sub") this.output.push("M=M-D");
-      if (command === "and") this.output.push("M=M&D");
-      if (command === "or") this.output.push("M=M|D");
+      if (command === "and") this.output.push("M=D&M");
+      if (command === "or") this.output.push("M=D|M");
     } else if (command === "neg" || command === "not") {
       this.output.push("@SP", "A=M-1");
       if (command === "neg") this.output.push("M=-M");
@@ -56,7 +56,7 @@ export class CodeWriter {
       if (segment === "constant") {
         this.output.push(`@${index}`, "D=A");
       } else if (segment === "local" || segment === "argument" || segment === "this" || segment === "that") {
-        this.output.push(`@${index}`, "D=A", `@${SEGMENT_POINTERS[segment]}`, "A=M+D", "D=M");
+        this.output.push(`@${index}`, "D=A", `@${SEGMENT_POINTERS[segment]}`, "A=D+M", "D=M");
       } else if (segment === "pointer" || segment === "temp") {
         const base = segment === "pointer" ? SEGMENT_BASES["pointer"] : SEGMENT_BASES["temp"];
         this.output.push(`@${base + index}`, "D=M");
@@ -69,7 +69,7 @@ export class CodeWriter {
 
     } else if (command === VMCommandType.C_POP) {
       if (segment === "local" || segment === "argument" || segment === "this" || segment === "that") {
-        this.output.push(`@${index}`, "D=A", `@${SEGMENT_POINTERS[segment]}`, "D=M+D", "@R13", "M=D"); // Store target address in R13
+        this.output.push(`@${index}`, "D=A", `@${SEGMENT_POINTERS[segment]}`, "D=D+M", "@R13", "M=D"); // Store target address in R13
         this.output.push("@SP", "AM=M-1", "D=M"); // Pop value into D
         this.output.push("@R13", "A=M", "M=D"); // Move D to target address
       } else if (segment === "pointer" || segment === "temp") {

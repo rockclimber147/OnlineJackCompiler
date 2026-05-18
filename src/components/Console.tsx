@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Terminal as TerminalIcon, Trash2 } from "lucide-react";
+import { Terminal as TerminalIcon } from "lucide-react";
 import { type LogMessage } from "../types/Compiler";
 
 interface ConsoleProps {
