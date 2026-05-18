@@ -1,8 +1,7 @@
 import { VMCommandType, ARITHMETIC_COMMANDS } from "../../languages/vm/VmSpec";
-import { type ParsedLine } from "../../types/Compiler";
 
 export class Parser {
-  private lines: ParsedLine[] = [];
+  private lines: { text: string; originalLine: number; rawText: string }[] = [];
   private currentCommandIndex: number = -1;
   private currentTokens: string[] = [];
 
@@ -10,13 +9,15 @@ export class Parser {
     const rawLines = input.split(/\r?\n/);
     
     for (let i = 0; i < rawLines.length; i++) {
-      const raw = rawLines[i];
+      const raw = rawLines[i].trim();
       const text = raw.split("//")[0].trim();
       
-      if (text.length > 0) {
+      // Keep the line if it has code OR if it's a comment-only line
+      if (raw.length > 0) {
         this.lines.push({
           text,
-          originalLine: i + 1 
+          originalLine: i + 1,
+          rawText: raw 
         });
       }
     }
@@ -30,29 +31,28 @@ export class Parser {
     if (this.hasMoreCommands()) {
       this.currentCommandIndex++;
       const currentLineText = this.lines[this.currentCommandIndex].text;
-      // Split by whitespace to get the parts of the command
       this.currentTokens = currentLineText.split(/\s+/);
     }
   }
 
-  // NEW: Helper to get the original line number for error reporting
   public currentLineNumber(): number {
-    if (this.currentCommandIndex >= 0 && this.currentCommandIndex < this.lines.length) {
-      return this.lines[this.currentCommandIndex].originalLine;
-    }
-    return 1;
+    return this.lines[this.currentCommandIndex]?.originalLine || 1;
   }
 
-  // NEW: Helper to get the cleaned text for column width mapping
   public currentLineText(): string {
-    if (this.currentCommandIndex >= 0 && this.currentCommandIndex < this.lines.length) {
-      return this.lines[this.currentCommandIndex].text;
-    }
-    return "";
+    return this.lines[this.currentCommandIndex]?.text || "";
   }
 
-  public commandType(): VMCommandType {
+  // NEW: Expose the raw, unstripped text for the CodeWriter
+  public currentRawText(): string {
+    return this.lines[this.currentCommandIndex]?.rawText || "";
+  }
+
+  public commandType(): VMCommandType | "C_COMMENT" {
     const cmd = this.currentTokens[0];
+
+    // If the stripped text is empty, it was a comment-only line
+    if (cmd === "") return "C_COMMENT";
 
     if (ARITHMETIC_COMMANDS.has(cmd)) return VMCommandType.C_ARITHMETIC;
     if (cmd === "push") return VMCommandType.C_PUSH;
@@ -68,8 +68,8 @@ export class Parser {
   }
 
   public arg1(): string {
-    if (this.commandType() === VMCommandType.C_RETURN) {
-      throw new Error("arg1 should not be called on C_RETURN");
+    if (this.commandType() === VMCommandType.C_RETURN || this.commandType() === "C_COMMENT") {
+      throw new Error("arg1 should not be called on this type");
     }
     if (this.commandType() === VMCommandType.C_ARITHMETIC) {
       return this.currentTokens[0];
@@ -79,12 +79,7 @@ export class Parser {
 
   public arg2(): number {
     const type = this.commandType();
-    if (
-      type === VMCommandType.C_PUSH ||
-      type === VMCommandType.C_POP ||
-      type === VMCommandType.C_FUNCTION ||
-      type === VMCommandType.C_CALL
-    ) {
+    if (type === VMCommandType.C_PUSH || type === VMCommandType.C_POP || type === VMCommandType.C_FUNCTION || type === VMCommandType.C_CALL) {
       return parseInt(this.currentTokens[2], 10);
     }
     throw new Error(`arg2 called on invalid command type: ${type}`);

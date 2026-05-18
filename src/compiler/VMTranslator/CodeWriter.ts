@@ -10,6 +10,16 @@ export class CodeWriter {
     this.fileName = fileName.replace(".vm", "");
   }
 
+  public writeComment(comment: string): void {
+    this.output.push(comment.startsWith("//") ? comment : `// ${comment}`);
+  }
+
+  public writeFileName(): void {
+    this.writeComment("----------------------------------------------------------")
+    this.writeComment("                       " + this.fileName)
+    this.writeComment("----------------------------------------------------------")
+  }
+
   public writeInit(): void {
     this.output.push("// BOOTSTRAP CODE");
     this.output.push("@256", "D=A", "@SP", "M=D");
@@ -17,8 +27,6 @@ export class CodeWriter {
   }
 
   public writeArithmetic(command: string): void {
-    this.output.push(`// ${command}`);
-
     if (command === "add" || command === "sub" || command === "and" || command === "or") {
       this.output.push("@SP", "AM=M-1", "D=M", "A=A-1");
       if (command === "add") this.output.push("M=D+M");
@@ -49,8 +57,6 @@ export class CodeWriter {
   }
 
   public writePushPop(command: VMCommandType, segment: string, index: number): void {
-    this.output.push(`// ${command === VMCommandType.C_PUSH ? "push" : "pop"} ${segment} ${index}`);
-
     if (command === VMCommandType.C_PUSH) {
       if (segment === "constant") {
         this.output.push(`@${index}`, "D=A");
@@ -93,7 +99,6 @@ export class CodeWriter {
   }
 
   public writeFunction(functionName: string, numLocals: number): void {
-    this.output.push(`// function ${functionName} ${numLocals}`);
     this.currentFunction = functionName;
     this.output.push(`(${functionName})`);
     for (let i = 0; i < numLocals; i++) {
@@ -102,7 +107,6 @@ export class CodeWriter {
   }
 
   public writeCall(functionName: string, numArgs: number): void {
-    this.output.push(`// call ${functionName} ${numArgs}`);
     const returnAddress = `${functionName}$ret.${this.labelCounter++}`;
 
     // Push return address
@@ -127,7 +131,6 @@ export class CodeWriter {
   }
 
   public writeReturn(): void {
-    this.output.push("// return");
     // LCL -> R14 (endFrame)
     this.output.push("@LCL", "D=M", "@R14", "M=D");
     // *(endFrame - 5) -> R15 (retAddr)

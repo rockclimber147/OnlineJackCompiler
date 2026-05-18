@@ -102,6 +102,7 @@ export class VMTranslator {
   private translationPass(files: VirtualFile[], writer: CodeWriter): void {
     for (const file of files) {
       writer.setFileName(file.name);
+      writer.writeFileName();
       const parser = new Parser(file.content);
       let currentScope = file.name.replace(".vm", "");
 
@@ -109,6 +110,11 @@ export class VMTranslator {
         parser.advance();
         try {
           const type = parser.commandType();
+
+          writer.writeComment(parser.currentRawText());
+          
+
+          if (type === "C_COMMENT") continue;
 
           // Update scope tracker so gotos check the right list
           if (type === VMCommandType.C_FUNCTION) currentScope = parser.arg1();

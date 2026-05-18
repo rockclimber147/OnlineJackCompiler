@@ -21,7 +21,7 @@ export function useVMTranslator(files: VirtualFile[]) {
 
     const timeoutId = setTimeout(() => {
       const translator = new VMTranslator();
-      const result = translator.translateAll(files);
+      const result = translator.translateAll(files); 
       setCompilerErrors(result.errors);
       setSymbols(result.symbols);
     }, 500);
