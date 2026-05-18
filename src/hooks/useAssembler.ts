@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
-import { type LogMessage } from "../types/Compiler";
+import { type CompilerError, type LogMessage } from "../types/Compiler";
 
 export function useAssembler(activeContent?: string) {
   const [binaryCode, setBinaryCode] = useState<string>("// Binary machine code output will appear here");
   const [symbolTableData, setSymbolTableData] = useState<Array<{symbol: string, address: number}>>([]);
-  const [compilerErrors, setCompilerErrors] = useState<string[]>([]);
+  const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);
   const [logs, setLogs] = useState<LogMessage[]>([
     { text: "Assembler workspace initialized. Ready for source compilation.", type: "info" }
   ]);

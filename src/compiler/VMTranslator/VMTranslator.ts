@@ -2,16 +2,17 @@ import { Parser } from "./Parser";
 import { CodeWriter } from "./CodeWriter";
 import { VMCommandType } from "../../languages/vm/VmSpec";
 import { type VirtualFile } from "../../types/Vfs";
+import { type CompilerError } from "../../types/Compiler"; 
 
 export interface VMTranslationResult {
   success: boolean;
   asmOutput: string;
-  errors: string[];
+  errors: CompilerError[]; 
 }
 
 export class VMTranslator {
   public translateAll(files: VirtualFile[]): VMTranslationResult {
-    const errors: string[] = [];
+    const errors: CompilerError[] = [];
     const writer = new CodeWriter();
 
     try {
@@ -27,7 +28,6 @@ export class VMTranslator {
         writer.setFileName(file.name);
         const parser = new Parser(file.content);
 
-        let lineNum = 1;
         while (parser.hasMoreCommands()) {
           parser.advance();
           try {
@@ -51,9 +51,16 @@ export class VMTranslator {
               writer.writeReturn();
             }
           } catch (err: any) {
-             errors.push(`Error in ${file.name} at command index ${lineNum}: ${err.message}`);
+             const originalLine = parser.currentLineNumber();
+             const text = parser.currentLineText();
+
+             errors.push({
+               message: `[${file.name}] ${err.message}`,
+               line: originalLine,
+               startCol: 1,
+               endCol: text.length + 1
+             });
           }
-          lineNum++;
         }
       }
 
@@ -71,7 +78,7 @@ export class VMTranslator {
       return {
         success: false,
         asmOutput: "// Fatal Engine Error",
-        errors: [err.message]
+        errors: [{ message: err.message, line: 1 }]
       };
     }
   }

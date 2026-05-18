@@ -1,7 +1,7 @@
 import { SymbolTable } from "./SymbolTable";
-import { Parser, InstructionType, type ParsedLine } from "./Parser";
+import { Parser, InstructionType } from "./Parser";
 import { COMP_MAP, DEST_MAP, JUMP_MAP } from "../../languages/asm/AsmSpec";
-import { type AssemblyResult } from "../../types/Compiler"; 
+import { type AssemblyResult, type CompilerError, type ParsedLine } from "../../types/Compiler"; 
 
 export class Assembler {
   public symbolTable: SymbolTable;
@@ -42,8 +42,8 @@ export class Assembler {
     }
   }
 
-  private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: string[] } {
-    const errors: string[] = [];
+  private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: CompilerError[] } {
+    const errors: CompilerError[] = [];
     const binary: string[] = [];
     let nextRamAddress = 16; 
 
@@ -61,7 +61,12 @@ export class Assembler {
           } else {
             if (!this.symbolTable.contains(symbol)) {
               if (symbol === symbol.toUpperCase()) {
-                errors.push(`Line ${originalLine}: Undefined label reference or symbol mismatch -> '@${symbol}'`);
+                errors.push({
+                  message: `Undefined label reference or symbol mismatch: '@${symbol}'`,
+                  line: originalLine,
+                  startCol: text.indexOf(symbol) + 1, // +1 because Monaco is 1-indexed
+                  endCol: text.indexOf(symbol) + 1 + symbol.length
+                });
                 continue; 
               }
               this.symbolTable.addEntry(symbol, nextRamAddress++);
@@ -82,14 +87,27 @@ export class Assembler {
           const compBin = COMP_MAP[compMnemonic];
 
           if (!compBin) {
-            errors.push(`Line ${originalLine}: Invalid comp instruction '${compMnemonic}' in '${text}'`);
+            // HIGHLIGHT: Just the invalid comp part (e.g., in "D=M+D;JMP", highlight "M+D")
+            const compStart = text.indexOf(compMnemonic);
+            errors.push({
+              message: `Invalid comp instruction: '${compMnemonic}'`,
+              line: originalLine,
+              startCol: compStart !== -1 ? compStart + 1 : 1,
+              endCol: compStart !== -1 ? compStart + 1 + compMnemonic.length : text.length + 1
+            });
             continue;
           }
 
           binary.push(`111${compBin}${destBin}${jumpBin}`);
         }
       } catch (err: any) {
-        errors.push(`Line ${originalLine} (${text}): ${err.message}`);
+        // Fallback for generic parsing errors (highlight the whole instruction)
+        errors.push({
+          message: err.message,
+          line: originalLine,
+          startCol: 1,
+          endCol: text.length + 1
+        });
       }
     }
 

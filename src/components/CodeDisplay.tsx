@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import Editor, { type Monaco, type BeforeMount } from "@monaco-editor/react";
 import { registerCustomLanguages } from "../languages"; 
+import { type CompilerError } from "../types/Compiler"; // <-- Import the new type
 
 interface CodeDisplayProps {
   title: string;
@@ -8,8 +9,8 @@ interface CodeDisplayProps {
   onChange?: (value: string) => void;
   language: string;
   readOnly?: boolean;
-  errors?: string[];
-  actions?: React.ReactNode; // <-- NEW: Injected buttons
+  errors?: CompilerError[]; // <-- UPDATED: Array of structured objects
+  actions?: React.ReactNode; 
 }
 
 export function CodeDisplay({ 
@@ -39,25 +40,24 @@ export function CodeDisplay({
     const model = editorRef.current.getModel();
     if (!model) return;
 
-    const markers = errors.map((errStr) => {
-      const match = errStr.match(/Line (\d+)/);
-      const lineNum = match ? parseInt(match[1], 10) : 1;
+    // Use the structured error objects to create precise markers
+    const markers = errors.map((err) => {
       return {
-        startLineNumber: lineNum,
-        startColumn: 1,
-        endLineNumber: lineNum,
-        endColumn: 1000, 
-        message: errStr,
+        startLineNumber: err.line,
+        startColumn: err.startCol || 1, // Fallback to beginning of line
+        endLineNumber: err.line,
+        endColumn: err.endCol || 1000,  // Fallback to end of line
+        message: err.message,
         severity: monacoRef.current!.MarkerSeverity.Error,
       };
     });
 
-    monacoRef.current.editor.setModelMarkers(model, "assembler", markers);
+    // Labeling the owner as "compiler" instead of hardcoding "assembler"
+    monacoRef.current.editor.setModelMarkers(model, "compiler", markers);
   }, [errors]);
 
   return (
     <div className="flex flex-col h-full w-full bg-[#1e1e1e]">
-      {/* UPDATE: Header with Flexbox for Actions */}
       <div className="flex items-center justify-between px-4 py-1.5 bg-[#252526] border-b border-black/40 shrink-0">
         <span className="text-xs font-semibold text-slate-400 truncate">{title}</span>
         {actions && <div className="flex items-center gap-1.5 shrink-0 ml-2">{actions}</div>}

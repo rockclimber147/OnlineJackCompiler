@@ -10,12 +10,7 @@ import { useVMTranslator } from "../hooks/useVMTranslator";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
 
 export function VMTranslatorPage() {
-  // 1. Initialize Translator Hook
-  const { 
-    asmCode, logs, addLog, runTranslate 
-  } = useVMTranslator();
 
-  // 2. Initialize File System Hook (Configured for .vm files, NO onLog here)
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles, renameFile, deleteFile
@@ -23,11 +18,11 @@ export function VMTranslatorPage() {
     initialFiles: []
   });
 
-  // --- Handlers ---
-  const handleTranslateClick = () => {
-    // A VM Translator needs all files in the directory to link them properly
-    runTranslate(files); 
-  };
+  const { asmCode, logs, compilerErrors, addLog, runTranslate } = useVMTranslator(files);
+
+  const activeFileErrors = compilerErrors.filter(err => 
+    activeFile && err.message.startsWith(`[${activeFile.name}]`)
+  );
 
   const handleCopyClick = async (text: string) => {
     const success = await copyToClipboard(text);
@@ -37,18 +32,20 @@ export function VMTranslatorPage() {
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
+        
+        {/* Top Section: Split Panels */}
         <div className="h-[75%] min-h-[200px] w-full shrink-0">
           <Group className="h-full w-full">
             
             {/* 1. Left Panel: File Explorer */}
-            <Panel defaultSize={20} minSize={15} className="bg-[#181818]">
+            <Panel defaultSize={15} minSize={10} className="bg-[#181818]">
               <FileExplorer 
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
                 onAddFile={(name) => addFile(name, ".vm", "hackvm")}
                 onUploadFiles={(fl) => uploadFiles(fl, ".vm", "hackvm", addLog)}
-                onRenameFile={renameFile}
+                onRenameFile={(id, name) => renameFile(id, name)}
                 onDeleteFile={deleteFile}
                 title="VM FILES"
                 acceptedExtensions=".vm"
@@ -57,14 +54,15 @@ export function VMTranslatorPage() {
 
             <Separator className="w-1 bg-black/40 hover:bg-indigo-600 transition-colors cursor-col-resize" />
 
-            {/* 2. Middle Panel: Source Code Editor */}
-            <Panel defaultSize={40} minSize={20} className="bg-[#252526]">
+            {/* 2. Middle Panel: VM Code Editor */}
+            <Panel defaultSize={45} minSize={20} className="bg-[#252526]">
               {activeFile ? (
                 <CodeDisplay
                   title={activeFile.name}
                   value={activeFile.content}
                   language={activeFile.language}
                   onChange={updateActiveFile}
+                  errors={activeFileErrors} // <-- Filtered errors passed to Monaco
                   actions={
                     <>
                       <button onClick={() => handleCopyClick(activeFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
@@ -83,7 +81,7 @@ export function VMTranslatorPage() {
 
             <Separator className="w-1 bg-black/40 hover:bg-indigo-600 transition-colors cursor-col-resize" />
 
-            {/* 3. Right Panel: ASM Output Viewer */}
+            {/* 3. Right Panel: Combined ASM Output Viewer */}
             <Panel defaultSize={40} minSize={20} className="bg-[#252526] flex flex-col">
               <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-black/40 shrink-0">
                 
@@ -94,7 +92,7 @@ export function VMTranslatorPage() {
                 </div>
 
                 <div className="flex items-center gap-2 px-3">
-                  <button onClick={handleTranslateClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
+                  <button onClick={runTranslate} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
                     <Play size={12} fill="currentColor" /> Translate All
                   </button>
                 </div>
@@ -102,7 +100,7 @@ export function VMTranslatorPage() {
 
               <div className="flex-1 min-h-0 relative">
                 <CodeDisplay
-                  title="COMBINED OUTPUT" 
+                  title="Project.asm" 
                   value={asmCode}
                   language="hackasm" 
                   readOnly={true}
@@ -111,9 +109,7 @@ export function VMTranslatorPage() {
                       <button onClick={() => handleCopyClick(asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
                         <Copy size={13} /> Copy
                       </button>
-                      
-                      {/* ADDED: Download button moved down here */}
-                      {asmCode && !asmCode.startsWith("// Translated assembly") && (
+                      {asmCode && !asmCode.startsWith("// Translated assembly") && !asmCode.startsWith("// Translation Failed") && (
                         <button onClick={() => downloadFile("Project.asm", asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
                           <Download size={13} /> Save
                         </button>
@@ -127,10 +123,12 @@ export function VMTranslatorPage() {
           </Group>
         </div>
 
+        {/* Bottom Section: Console Log */}
         <div className="h-1 bg-black/30 border-y border-slate-800/40 w-full shrink-0" />
         <div className="flex-1 min-h-[100px] w-full bg-[#1e1e1e]">
-          <Console logs={logs} />
+          <Console logs={logs}/>
         </div>
+        
       </main>
     </div>
   );

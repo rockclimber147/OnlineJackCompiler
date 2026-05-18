@@ -7,7 +7,6 @@ export class CodeWriter {
   private currentFunction: string = "";
 
   public setFileName(fileName: string): void {
-    // Strip the extension (e.g., "Main.vm" -> "Main")
     this.fileName = fileName.replace(".vm", "");
   }
 

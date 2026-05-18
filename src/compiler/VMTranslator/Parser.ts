@@ -1,16 +1,25 @@
 import { VMCommandType, ARITHMETIC_COMMANDS } from "../../languages/vm/VmSpec";
+import { type ParsedLine } from "../../types/Compiler";
 
 export class Parser {
-  private lines: string[] = [];
+  private lines: ParsedLine[] = [];
   private currentCommandIndex: number = -1;
   private currentTokens: string[] = [];
 
   constructor(input: string) {
-    // Split by newlines, remove comments, trim, and filter out empty lines
-    this.lines = input
-      .split(/\r?\n/)
-      .map(line => line.split("//")[0].trim())
-      .filter(line => line.length > 0);
+    const rawLines = input.split(/\r?\n/);
+    
+    for (let i = 0; i < rawLines.length; i++) {
+      const raw = rawLines[i];
+      const text = raw.split("//")[0].trim();
+      
+      if (text.length > 0) {
+        this.lines.push({
+          text,
+          originalLine: i + 1 
+        });
+      }
+    }
   }
 
   public hasMoreCommands(): boolean {
@@ -20,10 +29,26 @@ export class Parser {
   public advance(): void {
     if (this.hasMoreCommands()) {
       this.currentCommandIndex++;
-      const currentLine = this.lines[this.currentCommandIndex];
-      // Split by whitespace to get the parts of the command (e.g., ["push", "constant", "7"])
-      this.currentTokens = currentLine.split(/\s+/);
+      const currentLineText = this.lines[this.currentCommandIndex].text;
+      // Split by whitespace to get the parts of the command
+      this.currentTokens = currentLineText.split(/\s+/);
     }
+  }
+
+  // NEW: Helper to get the original line number for error reporting
+  public currentLineNumber(): number {
+    if (this.currentCommandIndex >= 0 && this.currentCommandIndex < this.lines.length) {
+      return this.lines[this.currentCommandIndex].originalLine;
+    }
+    return 1;
+  }
+
+  // NEW: Helper to get the cleaned text for column width mapping
+  public currentLineText(): string {
+    if (this.currentCommandIndex >= 0 && this.currentCommandIndex < this.lines.length) {
+      return this.lines[this.currentCommandIndex].text;
+    }
+    return "";
   }
 
   public commandType(): VMCommandType {
@@ -46,7 +71,6 @@ export class Parser {
     if (this.commandType() === VMCommandType.C_RETURN) {
       throw new Error("arg1 should not be called on C_RETURN");
     }
-    // For arithmetic, the command itself is arg1 (e.g., "add")
     if (this.commandType() === VMCommandType.C_ARITHMETIC) {
       return this.currentTokens[0];
     }

@@ -8,5 +8,23 @@ export interface LogMessage {
 export interface AssemblyResult {
   success: boolean;
   binary: string[];
-  errors: string[];
+  errors: CompilerError[];
+}
+
+export interface VMTranslationResult {
+  success: boolean;
+  asmOutput: string;
+  errors: CompilerError[];
+}
+
+export interface CompilerError {
+  message: string;
+  line: number;
+  startCol?: number; // Optional: defaults to 1
+  endCol?: number;   // Optional: defaults to end of line
+}
+
+export interface ParsedLine {
+  text: string;
+  originalLine: number;
 }
