@@ -14,6 +14,7 @@ interface FileExplorerProps {
   onDeleteFile?: (id: string) => void;
   title?: string;
   acceptedExtensions?: string; 
+  readOnly?: boolean;
 }
 
 export function FileExplorer({
@@ -22,10 +23,11 @@ export function FileExplorer({
   onSelectFile,
   onAddFile,
   onUploadFiles,
-  onRenameFile,    // <-- NEW
-  onDeleteFile,    // <-- NEW
+  onRenameFile,  
+  onDeleteFile, 
   title = "EXPLORER",
-  acceptedExtensions
+  acceptedExtensions,
+  readOnly = false
 }: FileExplorerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +37,7 @@ export function FileExplorer({
     if (name) onAddFile(name);
   };
 
-  // --- NEW: Handlers for Rename & Delete ---
+
   const handleRename = (e: React.MouseEvent, file: VirtualFile) => {
     e.stopPropagation(); // Prevents the row from being "clicked" (selecting the file)
     const newName = prompt("Rename file to:", file.name);
@@ -62,11 +64,14 @@ export function FileExplorer({
       {/* Header & Actions */}
       <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 tracking-wider">
         <span>{title}</span>
-        <div className="flex items-center gap-1">
-          <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="New File"><FilePlus size={14} /></button>
-          <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Files"><Upload size={14} /></button>
-          <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Folder"><FolderOpen size={14} /></button>
-        </div>
+        {/* 3. Hide the add/upload buttons if readOnly is true */}
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="New File"><FilePlus size={14} /></button>
+            <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Files"><Upload size={14} /></button>
+            <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200" title="Upload Folder"><FolderOpen size={14} /></button>
+          </div>
+        )}
       </div>
 
       {/* File List */}

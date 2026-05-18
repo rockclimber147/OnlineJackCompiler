@@ -74,6 +74,7 @@ export function CodeDisplay({
           options={{
             readOnly,
             minimap: { enabled: false },
+            automaticLayout: true,
             fontSize: 13,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             wordWrap: "on",

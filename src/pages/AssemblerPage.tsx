@@ -17,12 +17,7 @@ export function AssemblerPage() {
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles, setFileError, renameFile, deleteFile
   } = useVFS({
-    initialFiles: [{
-      id: crypto.randomUUID(),
-      name: "Example.asm",
-      language: "hackasm",
-      content: "// Example: Compute 2 + 3\n@2\nD=A\n@3\nD=D+A\n(END)\n@END\n0;JMP"
-    }]
+    initialFiles: []
   });
 
   const { 
@@ -112,11 +107,6 @@ export function AssemblerPage() {
                 </div>
 
                 <div className="flex items-center gap-2 px-3">
-                  {activeRightTab === "binary" && binaryCode !== "// Compilation Failed" && !binaryCode.startsWith("//") && (
-                    <button onClick={() => downloadFile(activeFile?.name.replace(".asm", ".hack") || "output.hack", binaryCode)} className="text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer" title="Download .hack file">
-                      <Download size={14} />
-                    </button>
-                  )}
                   <button onClick={handleCompileClick} disabled={!activeFile} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
                     <Play size={12} fill="currentColor" /> Run Assembler
                   </button>
@@ -131,9 +121,18 @@ export function AssemblerPage() {
                     language="plaintext"
                     readOnly={true}
                     actions={
-                      <button onClick={() => handleCopyClick(binaryCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
-                        <Copy size={13} /> Copy
-                      </button>
+                      <>
+                        <button onClick={() => handleCopyClick(binaryCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                          <Copy size={13} /> Copy
+                        </button>
+                        
+                        {/* ADDED: Download button is now native to the CodeDisplay header */}
+                        {binaryCode !== "// Compilation Failed" && !binaryCode.startsWith("//") && (
+                          <button onClick={() => downloadFile(activeFile?.name.replace(".asm", ".hack") || "output.hack", binaryCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                            <Download size={13} /> Save
+                          </button>
+                        )}
+                      </>
                     }
                   />
                 ) : (

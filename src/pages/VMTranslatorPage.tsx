@@ -20,12 +20,7 @@ export function VMTranslatorPage() {
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles, renameFile, deleteFile
   } = useVFS({
-    initialFiles: [{
-      id: crypto.randomUUID(),
-      name: "Main.vm",
-      language: "plaintext", // Monaco doesn't have native VM syntax highlighting unless you add it!
-      content: "// push constant 7\n// push constant 8\n// add"
-    }]
+    initialFiles: []
   });
 
   // --- Handlers ---
@@ -99,11 +94,6 @@ export function VMTranslatorPage() {
                 </div>
 
                 <div className="flex items-center gap-2 px-3">
-                  {asmCode && !asmCode.startsWith("// Translated assembly") && (
-                    <button onClick={() => downloadFile("Project.asm", asmCode)} className="text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer" title="Download .asm file">
-                      <Download size={14} />
-                    </button>
-                  )}
                   <button onClick={handleTranslateClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
                     <Play size={12} fill="currentColor" /> Translate All
                   </button>
@@ -114,12 +104,21 @@ export function VMTranslatorPage() {
                 <CodeDisplay
                   title="COMBINED OUTPUT" 
                   value={asmCode}
-                  language="hackasm" // Output uses your custom ASM highlighting!
+                  language="hackasm" 
                   readOnly={true}
                   actions={
-                    <button onClick={() => handleCopyClick(asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
-                      <Copy size={13} /> Copy
-                    </button>
+                    <>
+                      <button onClick={() => handleCopyClick(asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                        <Copy size={13} /> Copy
+                      </button>
+                      
+                      {/* ADDED: Download button moved down here */}
+                      {asmCode && !asmCode.startsWith("// Translated assembly") && (
+                        <button onClick={() => downloadFile("Project.asm", asmCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                          <Download size={13} /> Save
+                        </button>
+                      )}
+                    </>
                   }
                 />
               </div>

@@ -1,4 +1,4 @@
-export type TabType = "assembler" | "cpuemulator" | "vmtranslator";
+export type TabType = "assembler" | "cpuemulator" | "vmtranslator" | "jackcompiler";
 
 export interface LogMessage {
   text: string;
