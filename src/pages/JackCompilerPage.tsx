@@ -6,7 +6,7 @@ import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
 import { FileExplorer } from "../components/FileExplorer";
 
-import { useVFS } from "../hooks/UseVFS";
+import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
 
@@ -14,7 +14,6 @@ export function JackCompilerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
   const [activeCompiledFileId, setActiveCompiledFileId] = useState<string | null>(null);
 
-  // 1. Hook for Input (.jack)
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
     addFile, updateActiveFile, uploadFiles, renameFile, deleteFile 
@@ -22,12 +21,11 @@ export function JackCompilerPage() {
     initialFiles: [{
       id: crypto.randomUUID(),
       name: "Main.jack",
-      language: "javascript", // Monaco has great default JS highlighting that looks perfect for Jack!
+      language: "jack",
       content: "class Main {\n  function void main() {\n    do Output.printString(\"Hello World\");\n    return;\n  }\n}"
     }]
   });
 
-  // 2. Hook for Output (.vm)
   const { compiledFiles, logs, addLog, runCompile } = useJackCompiler();
 
   const activeCompiledFile = compiledFiles.find(f => f.id === activeCompiledFileId) || compiledFiles[0];
@@ -51,8 +49,8 @@ export function JackCompilerPage() {
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
-                onAddFile={(name) => addFile(name, ".jack", "javascript")}
-                onUploadFiles={(fl) => uploadFiles(fl, ".jack", "javascript", addLog)}
+                onAddFile={(name) => addFile(name, ".jack", "jack")}
+                onUploadFiles={(fl) => uploadFiles(fl, ".jack", "jack", addLog)}
                 onRenameFile={(id, name) => renameFile(id, name)}
                 onDeleteFile={deleteFile}
                 title="JACK FILES"
@@ -130,7 +128,7 @@ export function JackCompilerPage() {
                         <CodeDisplay
                           title={activeCompiledFile.name}
                           value={activeCompiledFile.content}
-                          language="plaintext"
+                          language="hackvm"
                           readOnly={true}
                           actions={
                             <>

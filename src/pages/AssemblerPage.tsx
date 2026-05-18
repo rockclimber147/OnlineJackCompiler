@@ -6,7 +6,7 @@ import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
 import { FileExplorer } from "../components/FileExplorer";
 
-import { useVFS } from "../hooks/UseVFS";
+import { useVFS } from "../hooks/useVFS";
 import { useAssembler } from "../hooks/useAssembler";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
 
@@ -118,7 +118,7 @@ export function AssemblerPage() {
                   <CodeDisplay
                     title="OUTPUT" 
                     value={binaryCode}
-                    language="plaintext"
+                    language="hackbinary"
                     readOnly={true}
                     actions={
                       <>

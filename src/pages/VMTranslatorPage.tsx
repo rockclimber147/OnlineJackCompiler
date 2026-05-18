@@ -5,7 +5,7 @@ import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
 import { FileExplorer } from "../components/FileExplorer";
 
-import { useVFS } from "../hooks/UseVFS";
+import { useVFS } from "../hooks/useVFS";
 import { useVMTranslator } from "../hooks/useVMTranslator";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
 
@@ -46,8 +46,8 @@ export function VMTranslatorPage() {
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
-                onAddFile={(name) => addFile(name, ".vm", "plaintext")}
-                onUploadFiles={(fl) => uploadFiles(fl, ".vm", "plaintext", addLog)}
+                onAddFile={(name) => addFile(name, ".vm", "hackvm")}
+                onUploadFiles={(fl) => uploadFiles(fl, ".vm", "hackvm", addLog)}
                 onRenameFile={renameFile}
                 onDeleteFile={deleteFile}
                 title="VM FILES"
