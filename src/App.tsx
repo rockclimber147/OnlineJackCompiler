@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Cpu, Binary, Wrench } from "lucide-react";
+import { Cpu, Binary, Wrench, FileCode2 } from "lucide-react";
 import { type TabType } from "./types/Compiler";
 import { AssemblerPage } from "./pages/AssemblerPage";
+import { VMTranslatorPage } from "./pages/VMTranslatorPage";
 
 export default function App() {
+  // Ensure your TabType in ./types/Compiler.ts includes "vmtranslator"
   const [activeTab, setActiveTab] = useState<TabType>("assembler");
 
   return (
@@ -29,6 +31,18 @@ export default function App() {
             >
               <Binary size={16} /> Assembler
             </button>
+            
+            <button
+              onClick={() => setActiveTab("vmtranslator")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === "vmtranslator"
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              }`}
+            >
+              <FileCode2 size={16} /> VM Translator
+            </button>
+
             <button
               onClick={() => setActiveTab("cpuemulator")}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -46,6 +60,8 @@ export default function App() {
       {/* Primary Page Viewer Context Container */}
       <div className="flex-grow overflow-hidden relative">
         {activeTab === "assembler" && <AssemblerPage />}
+        
+        {activeTab === "vmtranslator" && <VMTranslatorPage />}
         
         {activeTab === "cpuemulator" && (
           <div className="h-full w-full bg-slate-900 flex items-center justify-center font-mono text-slate-400 italic text-sm">
