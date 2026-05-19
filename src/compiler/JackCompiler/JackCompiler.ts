@@ -19,7 +19,7 @@ export interface JackCompilationResult {
 }
 
 export class JackCompiler {
-  public compileAll(files: VirtualFile[]): JackCompilationResult {
+  public compileAll(files: VirtualFile[], generateVM: boolean = true): JackCompilationResult {
     const jackFiles = files.filter(f => f.name.endsWith(".jack"));
 
     // Phase 1: Syntax
@@ -41,9 +41,15 @@ export class JackCompiler {
     }
 
     // Phase 4: Code Generation (NEW)
-    const { compiledFiles, errors: codegenErrors } = this.runCodeWriterPass(asts, globalTable);
-    if (codegenErrors.length > 0) {
-      return { success: false, errors: codegenErrors, asts, symbolTable: globalTable, compiledFiles: [] };
+    let compiledFiles: VirtualFile[] = [];
+
+    if (generateVM) {
+      const codegenResult = this.runCodeWriterPass(asts, globalTable);
+      compiledFiles = codegenResult.compiledFiles;
+      
+      if (codegenResult.errors.length > 0) {
+        return { success: false, errors: codegenResult.errors, asts, symbolTable: globalTable, compiledFiles: [] };
+      }
     }
 
     // Success

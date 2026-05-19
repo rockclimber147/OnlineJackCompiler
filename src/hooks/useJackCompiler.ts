@@ -23,7 +23,7 @@ export function useJackCompiler(files: VirtualFile[]) {
 
     const timeoutId = setTimeout(() => {
       const compiler = new JackCompiler();
-      const result = compiler.compileAll(files);
+      const result = compiler.compileAll(files, false);
       setCompilerErrors(result.errors);
       
       // Auto-update VM files if it successfully compiles
@@ -36,16 +36,23 @@ export function useJackCompiler(files: VirtualFile[]) {
   }, [files]);
 
   // Manual compile button
-  const runCompile = () => {
+const runCompile = () => {
     if (files.length === 0) return;
     const compiler = new JackCompiler();
-    const result = compiler.compileAll(files);
+    
+    const result = compiler.compileAll(files, true);
+
+    setCompilerErrors(result.errors);
 
     if (result.success) {
-      setCompiledFiles(result.compiledFiles); // Update VM files state
-      addLog(`[Success] Compiled ${result.compiledFiles.length} files successfully.`, "success");
+      setCompiledFiles(result.compiledFiles);
+      addLog(`[Success] Compiled ${result.compiledFiles.length} files to VM successfully.`, "success");
     } else {
-      addLog(`[Build Failure] Found ${result.errors.length} errors.`, "error");
+      addLog(`[Build Failure] Found ${result.errors.length} errors. Fix them before compiling:`, "error");
+    
+      result.errors.forEach(err => {
+        addLog(`  -> ${err.message}`, "error");
+      });
     }
   };
 
