@@ -5,6 +5,7 @@ import { JackCompiler } from "../compiler/JackCompiler/JackCompiler";
 
 export function useJackCompiler(files: VirtualFile[]) {
   const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);
+  const [compiledFiles, setCompiledFiles] = useState<VirtualFile[]>([]); // <-- NEW STATE
   const [logs, setLogs] = useState<LogMessage[]>([
     { text: "Jack Compiler workspace initialized. Ready for syntax checking.", type: "info" }
   ]);
@@ -12,9 +13,11 @@ export function useJackCompiler(files: VirtualFile[]) {
   const addLog = (text: string, type: LogMessage["type"]) => setLogs(prev => [...prev, { text, type }]);
   const clearLogs = () => setLogs([]);
 
+  // Auto-compile on typing
   useEffect(() => {
     if (!files || files.length === 0) {
       setCompilerErrors([]);
+      setCompiledFiles([]);
       return;
     }
 
@@ -22,22 +25,29 @@ export function useJackCompiler(files: VirtualFile[]) {
       const compiler = new JackCompiler();
       const result = compiler.compileAll(files);
       setCompilerErrors(result.errors);
+      
+      // Auto-update VM files if it successfully compiles
+      if (result.success) {
+        setCompiledFiles(result.compiledFiles);
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [files]);
 
+  // Manual compile button
   const runCompile = () => {
     if (files.length === 0) return;
     const compiler = new JackCompiler();
     const result = compiler.compileAll(files);
 
     if (result.success) {
-      addLog(`[Success] Parsed ${files.length} Jack files with 0 syntax errors.`, "success");
+      setCompiledFiles(result.compiledFiles); // Update VM files state
+      addLog(`[Success] Compiled ${result.compiledFiles.length} files successfully.`, "success");
     } else {
-      addLog(`[Build Failure] Found ${result.errors.length} syntax errors.`, "error");
+      addLog(`[Build Failure] Found ${result.errors.length} errors.`, "error");
     }
   };
 
-  return { logs, compilerErrors, addLog, clearLogs, runCompile };
+  return { logs, compilerErrors, compiledFiles, addLog, clearLogs, runCompile };
 }

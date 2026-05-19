@@ -58,7 +58,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
       this.currentClassName,
       this.currentSubroutineName,
     );
-    if (error) this.newErrors.push(new JackCompilerError(node.startToken, error));
+    if (error) this.newErrors.push(new JackCompilerError(node.endToken, error));
     if (node.indexExpression) this.visit(node.indexExpression);
     this.visit(node.valueExpression);
   }
@@ -87,7 +87,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
       this.currentClassName,
       this.currentSubroutineName,
     );
-    if (error) this.newErrors.push(new JackCompilerError(node.startToken, error));
+    if (error) this.newErrors.push(new JackCompilerError(node.endToken, error));
     if (node.arrayIndex) {
       this.visit(node.arrayIndex);
     }
@@ -105,7 +105,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
       this.currentSubroutineName,
       node.target,
     );
-    if (error) this.newErrors.push(new JackCompilerError(node.startToken, error));
+    if (error) this.newErrors.push(new JackCompilerError(node.endToken, error));
     node.arguments?.forEach((argExpr) => this.visit(argExpr));
   }
 

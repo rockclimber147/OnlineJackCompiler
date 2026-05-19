@@ -8,12 +8,14 @@ import { GlobalSymbolTable } from "./Visitors/SymbolTableVisitor/SymbolTable";
 import { SymbolTableBuiltinBuilder } from "./Visitors/SymbolTableVisitor/SymbolTableBuiltInBuilder";
 import { SymbolTableVisitor } from "./Visitors/SymbolTableVisitor/SymbolTableVisitor";
 import { JackSemanticVisitor } from "./Visitors/SemanticVisitor/SemanticVisitor";
+import { CodeWriterVisitor } from "./Visitors/CodeWriterVisitor/CodeWriterVisitor";
 
 export interface JackCompilationResult {
   success: boolean;
   errors: CompilerError[];
   asts: Record<string, JackClassNode | null>;
   symbolTable?: GlobalSymbolTable;
+  compiledFiles: VirtualFile[];
 }
 
 export class JackCompiler {
@@ -23,19 +25,25 @@ export class JackCompiler {
     // Phase 1: Syntax
     const { asts, errors: syntaxErrors } = this.runParserPass(jackFiles);
     if (syntaxErrors.length > 0) {
-      return { success: false, errors: syntaxErrors, asts };
+      return { success: false, errors: syntaxErrors, asts, compiledFiles: [] };
     }
 
     // Phase 2: Symbols
     const { globalTable, errors: symbolErrors } = this.runSymbolTablePass(asts);
     if (symbolErrors.length > 0) {
-      return { success: false, errors: symbolErrors, asts, symbolTable: globalTable };
+      return { success: false, errors: symbolErrors, asts, symbolTable: globalTable, compiledFiles: [] };
     }
 
     // Phase 3: Semantics
     const semanticErrors = this.runSemanticPass(asts, globalTable);
     if (semanticErrors.length > 0) {
-      return { success: false, errors: semanticErrors, asts, symbolTable: globalTable };
+      return { success: false, errors: semanticErrors, asts, symbolTable: globalTable, compiledFiles: [] };
+    }
+
+    // Phase 4: Code Generation (NEW)
+    const { compiledFiles, errors: codegenErrors } = this.runCodeWriterPass(asts, globalTable);
+    if (codegenErrors.length > 0) {
+      return { success: false, errors: codegenErrors, asts, symbolTable: globalTable, compiledFiles: [] };
     }
 
     // Success
@@ -43,13 +51,11 @@ export class JackCompiler {
       success: true,
       errors: [],
       asts,
-      symbolTable: globalTable
+      symbolTable: globalTable,
+      compiledFiles
     };
   }
 
-  // ==========================================
-  // PHASE 1: TOKENIZE & PARSE
-  // ==========================================
   private runParserPass(files: VirtualFile[]): { asts: Record<string, JackClassNode | null>, errors: CompilerError[] } {
     const asts: Record<string, JackClassNode | null> = {};
     const errors: CompilerError[] = [];
@@ -84,9 +90,6 @@ export class JackCompiler {
     return { asts, errors };
   }
 
-  // ==========================================
-  // PHASE 2: SYMBOL TABLE GENERATION
-  // ==========================================
   private runSymbolTablePass(asts: Record<string, JackClassNode | null>): { globalTable: GlobalSymbolTable, errors: CompilerError[] } {
     const globalTable = new GlobalSymbolTable();
     const errors: CompilerError[] = [];
@@ -109,9 +112,6 @@ export class JackCompiler {
     return { globalTable, errors };
   }
 
-  // ==========================================
-  // PHASE 3: SEMANTIC ANALYSIS
-  // ==========================================
   private runSemanticPass(asts: Record<string, JackClassNode | null>, globalTable: GlobalSymbolTable): CompilerError[] {
     const errors: CompilerError[] = [];
     const semanticVisitor = new JackSemanticVisitor(globalTable);
@@ -134,6 +134,44 @@ export class JackCompiler {
     }
 
     return errors;
+  }
+
+  private runCodeWriterPass(asts: Record<string, JackClassNode | null>, globalTable: GlobalSymbolTable): { compiledFiles: VirtualFile[], errors: CompilerError[] } {
+    const compiledFiles: VirtualFile[] = [];
+    const errors: CompilerError[] = [];
+
+    for (const [fileName, ast] of Object.entries(asts)) {
+      if (ast) {
+        try {
+          const codeWriter = new CodeWriterVisitor(globalTable);
+          codeWriter.visit(ast);
+          
+          const vmCode = codeWriter.getVMCode();
+          const vmFileName = fileName.replace(".jack", ".vm");
+
+          compiledFiles.push({
+            id: `compiled-${vmFileName}`, // Unique ID for the VFS
+            name: vmFileName,
+            language: "hackvm",
+            content: vmCode
+          });
+        } catch (err: any) {
+          if (err instanceof JackCompilerError) {
+            errors.push(this.formatError(fileName, err));
+          } else {
+            // Fallback for unexpected generator errors
+            errors.push({
+              message: `[${fileName}] VM Generation Error: ${err.message}`,
+              line: 1,
+              startCol: 1,
+              endCol: 10
+            });
+          }
+        }
+      }
+    }
+
+    return { compiledFiles, errors };
   }
 
   // ==========================================

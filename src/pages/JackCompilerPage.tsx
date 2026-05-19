@@ -9,7 +9,6 @@ import { FileExplorer } from "../components/FileExplorer";
 import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
 import { copyToClipboard, downloadFile } from "../utils/FileActions";
-import { type VirtualFile } from "../types/Vfs";
 
 export function JackCompilerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
@@ -27,15 +26,13 @@ export function JackCompilerPage() {
     }]
   });
 
-  const { logs, compilerErrors, addLog, runCompile } = useJackCompiler(files);
+  const { logs, compilerErrors, compiledFiles, addLog, runCompile } = useJackCompiler(files);
 
-  // Filter errors for the specific file currently open in the editor
+
   const activeFileErrors = compilerErrors.filter(err => 
     activeFile && err.message.startsWith(`[${activeFile.name}]`)
   );
 
-  // TODO: Replace with actual code generation visitor output later
-  const compiledFiles: VirtualFile[] = [];
   const activeCompiledFile = compiledFiles.find(f => f.id === activeCompiledFileId) || compiledFiles[0];
 
   const handleCompileClick = () => runCompile();
