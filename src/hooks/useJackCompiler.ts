@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { type LogMessage, type CompilerError } from "../types/Compiler";
 import { type VirtualFile } from "../types/Vfs";
 import { JackCompiler } from "../compiler/JackCompiler/JackCompiler";
+import type { GlobalSymbolTable } from "../compiler/JackCompiler/Visitors/SymbolTableVisitor/SymbolTable";
 
 export function useJackCompiler(files: VirtualFile[]) {
   const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);
-  const [compiledFiles, setCompiledFiles] = useState<VirtualFile[]>([]); // <-- NEW STATE
+  const [compiledFiles, setCompiledFiles] = useState<VirtualFile[]>([]);
+  const [symbolTable, setSymbolTable] = useState<GlobalSymbolTable | null>(null);
   const [logs, setLogs] = useState<LogMessage[]>([
     { text: "Jack Compiler workspace initialized. Ready for syntax checking.", type: "info" }
   ]);
@@ -25,7 +27,7 @@ export function useJackCompiler(files: VirtualFile[]) {
       const compiler = new JackCompiler();
       const result = compiler.compileAll(files, false);
       setCompilerErrors(result.errors);
-      
+      setSymbolTable(result.symbolTable || null);
       // Auto-update VM files if it successfully compiles
       if (result.success) {
         setCompiledFiles(result.compiledFiles);
@@ -35,7 +37,6 @@ export function useJackCompiler(files: VirtualFile[]) {
     return () => clearTimeout(timeoutId);
   }, [files]);
 
-  // Manual compile button
 const runCompile = () => {
     if (files.length === 0) return;
     const compiler = new JackCompiler();
@@ -43,6 +44,7 @@ const runCompile = () => {
     const result = compiler.compileAll(files, true);
 
     setCompilerErrors(result.errors);
+    setSymbolTable(result.symbolTable || null);
 
     if (result.success) {
       setCompiledFiles(result.compiledFiles);
@@ -56,5 +58,5 @@ const runCompile = () => {
     }
   };
 
-  return { logs, compilerErrors, compiledFiles, addLog, clearLogs, runCompile };
+  return { logs, compilerErrors, compiledFiles, symbolTable, addLog, clearLogs, runCompile };
 }

@@ -5,6 +5,7 @@ import { Play, Copy, Download } from "lucide-react";
 import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
 import { FileExplorer } from "../components/FileExplorer";
+import { JackSymbolTableViewer } from "../components/JackSymbolTableViewer";
 
 import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
@@ -26,7 +27,7 @@ export function JackCompilerPage() {
     }]
   });
 
-  const { logs, compilerErrors, compiledFiles, addLog, runCompile } = useJackCompiler(files);
+  const { logs, compilerErrors, symbolTable, compiledFiles, addLog, runCompile } = useJackCompiler(files);
 
 
   const activeFileErrors = compilerErrors.filter(err => 
@@ -102,8 +103,11 @@ export function JackCompilerPage() {
                   <button onClick={() => setActiveRightTab("vm")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "vm" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
                     VM OUTPUT
                   </button>
-                  <button onClick={() => setActiveRightTab("ast")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "ast" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
-                    AST (XML)
+                  <button 
+                    onClick={() => setActiveRightTab("symbols")} 
+                    className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "symbols" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}
+                  >
+                    SYMBOLS
                   </button>
                 </div>
 
@@ -156,8 +160,13 @@ export function JackCompilerPage() {
                       )}
                     </Panel>
                   </Group>
+                ) : activeRightTab === "symbols" ? (
+                  <JackSymbolTableViewer symbolTable={symbolTable} />
+
                 ) : (
-                  <div className="flex h-full items-center justify-center text-slate-500 text-sm italic">AST Viewer not yet implemented.</div>
+                  <div className="flex h-full items-center justify-center text-slate-500 text-sm italic">
+                    AST Viewer not yet implemented.
+                  </div>
                 )}
               </div>
             </Panel>
