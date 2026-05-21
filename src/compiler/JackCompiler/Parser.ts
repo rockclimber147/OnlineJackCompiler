@@ -91,6 +91,7 @@ export class JackParser extends BaseParser<JackClassNode> {
       startToken,
       endToken,
       name: className,
+      nameToken: startToken,
       classVarDecs,
       subroutines,
     };
@@ -121,6 +122,7 @@ export class JackParser extends BaseParser<JackClassNode> {
     return {
       kind: ASTNodeKind.VAR_DEC,
       startToken,
+      typeToken: next,
       endToken,
       varKind,
       type,
@@ -150,6 +152,8 @@ export class JackParser extends BaseParser<JackClassNode> {
     return {
       kind: ASTNodeKind.SUBROUTINE,
       startToken: startToken,
+      returnTypeToken: next,
+      nameToken: subroutineNameToken,
       subroutineKind: subroutineKind,
       name: subroutineNameToken.lexeme,
       returnType: returnType,
@@ -168,11 +172,11 @@ export class JackParser extends BaseParser<JackClassNode> {
       do {
         const paramStart = this.validator.peek(0);
 
-        let type: string;
+        let type: Token;
         if (this.check(TokenType.KEYWORD)) {
-          type = this.validator.expectOneOfLexemes(JackSpec.TYPES).lexeme;
+          type = this.validator.expectOneOfLexemes(JackSpec.TYPES);
         } else {
-          type = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
+          type = this.validator.expectType(TokenType.IDENTIFIER);
         }
 
         const nameToken = this.validator.expectType(TokenType.IDENTIFIER);
@@ -181,8 +185,10 @@ export class JackParser extends BaseParser<JackClassNode> {
         params.push({
           kind: ASTNodeKind.PARAMS,
           startToken: paramStart,
+          typeToken: type,
+          nameToken: nameToken,
           endToken: nameToken,
-          type: type,
+          type: type.lexeme,
           name: name,
         });
       } while (this.match(TokenType.SYMBOL, JackSpec.COMMA));
@@ -236,6 +242,7 @@ export class JackParser extends BaseParser<JackClassNode> {
     return {
       kind: ASTNodeKind.VAR_DEC,
       startToken,
+      typeToken: next,
       endToken,
       varKind,
       type,
@@ -263,7 +270,7 @@ export class JackParser extends BaseParser<JackClassNode> {
 
   private parseLet(): JackLetStatementNode {
     const startToken = this.validator.expectLexeme(JackSpec.LET);
-    const varName = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
+    const varToken = this.validator.expectType(TokenType.IDENTIFIER);
 
     let indexExpression: JackExpressionNode | undefined;
     if (this.match(TokenType.SYMBOL, JackSpec.L_BRACKET)) {
@@ -279,8 +286,9 @@ export class JackParser extends BaseParser<JackClassNode> {
       kind: ASTNodeKind.STATEMENT,
       statementType: JackSpec.LET,
       startToken,
+      varNameToken: varToken,
       endToken,
-      varName,
+      varName: varToken.lexeme,
       indexExpression,
       valueExpression,
     };
@@ -378,19 +386,27 @@ export class JackParser extends BaseParser<JackClassNode> {
     };
   }
 
-  private parseSubroutineCall(): JackSubroutineCallNode {
+private parseSubroutineCall(): JackSubroutineCallNode {
     const startToken = this.validator.peek(0);
-    const identifier = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
-
+    const firstToken = this.validator.expectType(TokenType.IDENTIFIER);
     let target: string | undefined;
+    let targetToken: Token | undefined;
     let methodName: string;
+    let methodNameToken: Token;
 
     if (this.match(TokenType.SYMBOL, JackSpec.DOT)) {
-      target = identifier;
-      methodName = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
+      target = firstToken.lexeme;
+      targetToken = firstToken;
+    
+      const secondToken = this.validator.expectType(TokenType.IDENTIFIER);
+      methodName = secondToken.lexeme;
+      methodNameToken = secondToken;
     } else {
       target = undefined;
-      methodName = identifier;
+      targetToken = undefined;
+      
+      methodName = firstToken.lexeme;
+      methodNameToken = firstToken;
     }
 
     this.validator.expectLexeme(JackSpec.L_PAREN);
@@ -403,7 +419,9 @@ export class JackParser extends BaseParser<JackClassNode> {
       startToken,
       endToken,
       target,
+      targetToken, // Pass the token!
       methodName,
+      methodNameToken, // Pass the token!
       arguments: args,
     };
   }
@@ -508,14 +526,15 @@ export class JackParser extends BaseParser<JackClassNode> {
       const nextToken = this.validator.peek(1);
 
       if (nextToken.lexeme === JackSpec.L_BRACKET) {
-        const name = this.validator.advance().lexeme;
+        const nameToken = this.validator.advance();
         this.validator.expectLexeme(JackSpec.L_BRACKET);
         const indexExpression = this.parseExpression();
         const endToken = this.validator.expectLexeme(JackSpec.R_BRACKET);
         return {
           kind: ASTNodeKind.TERM,
           type: ExpressionNodeTypes.VAR_NAME,
-          name,
+          name: nameToken.lexeme,
+          nameToken,
           arrayIndex: indexExpression,
           startToken: token,
           endToken,
@@ -530,6 +549,7 @@ export class JackParser extends BaseParser<JackClassNode> {
       return {
         kind: ASTNodeKind.TERM,
         type: ExpressionNodeTypes.VAR_NAME,
+        nameToken: token,
         name: token.lexeme,
         startToken: token,
         endToken: token,

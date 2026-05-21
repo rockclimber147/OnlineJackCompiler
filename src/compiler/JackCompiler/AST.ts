@@ -1,9 +1,11 @@
 import { ASTNodeKind, type ASTNode } from "../AST/AST";
 import { JackSpec } from '../../languages/jack/JackSpec';
+import type { Token } from './Token';
 
 export interface JackClassNode extends ASTNode {
   kind: typeof ASTNodeKind.CLASS;
   name: string;
+  nameToken: Token;
   classVarDecs: JackClassVarDecNode[];
   subroutines: JackSubroutineNode[];
 }
@@ -13,7 +15,9 @@ export interface JackClassVarDecNode extends ASTNode {
   kind: typeof ASTNodeKind.VAR_DEC;
   varKind: ClassVarKind;
   type: string;
+  typeToken: Token;
   names: string[];
+//   nameTokens: Token[];
 }
 
 export type SubroutineKind =
@@ -25,14 +29,18 @@ export interface JackSubroutineNode extends ASTNode {
   kind: typeof ASTNodeKind.SUBROUTINE;
   subroutineKind: SubroutineKind;
   returnType: string;
+  returnTypeToken: Token; // <-- Added
   name: string;
+  nameToken: Token; // <-- Added
   parameters: JackParameterNode[];
   body: JackSubroutineBodyNode;
 }
 
 export interface JackParameterNode extends ASTNode {
   type: string;
+  typeToken: Token;
   name: string;
+  nameToken: Token;
 }
 
 export interface JackSubroutineBodyNode extends ASTNode {
@@ -45,7 +53,9 @@ export interface JackSubroutineVarDecNode extends ASTNode {
   kind: typeof ASTNodeKind.VAR_DEC;
   varKind: SubroutineVarKind;
   type: string;
+  typeToken: Token;
   names: string[];
+//   nameTokens: Token[];
 }
 
 export type JackStatementNode =
@@ -59,6 +69,7 @@ export interface JackLetStatementNode extends ASTNode {
   kind: typeof ASTNodeKind.STATEMENT;
   statementType: typeof JackSpec.LET;
   varName: string;
+  varNameToken: Token; // <-- Added for precise assignment errors
   indexExpression?: JackExpressionNode;
   valueExpression: JackExpressionNode;
 }
@@ -140,6 +151,7 @@ export interface JackVariableTermNode extends ASTNode {
   kind: typeof ASTNodeKind.TERM;
   type: typeof ExpressionNodeTypes.VAR_NAME;
   name: string;
+  nameToken: Token;
   arrayIndex?: JackExpressionNode;
 }
 
@@ -160,6 +172,8 @@ export interface JackSubroutineCallNode extends ASTNode {
   kind: typeof ASTNodeKind.TERM;
   type: typeof ExpressionNodeTypes.SUBROUTINE_CALL;
   target?: string;
+  targetToken?: Token;
   methodName: string;
+  methodNameToken: Token;
   arguments: JackExpressionNode[];
 }
