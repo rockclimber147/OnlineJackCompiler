@@ -11,10 +11,12 @@ import type {
   JackSubroutineCallNode,
   JackClassNode,
   JackSubroutineNode,
+  JackStatementNode,
 } from '../../AST';
 import { JackVisitorAll } from '../JackVisitorBase';
 import { GlobalSymbolTable } from '../../SymbolTable';
 import { JackCompilerError } from '../../../Errors';
+import { JackSpec } from '../../../../languages/jack/JackSpec';
 
 export class JackSemanticVisitor extends JackVisitorAll<void> {
   private errors: JackCompilerError[] = [];
@@ -50,6 +52,15 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
 
     this.visitMany(node.body.varDecs);
     this.visitMany(node.body.statements);
+
+    const guaranteesReturn = this.doesBlockReturn(node.body.statements);
+
+    if (!guaranteesReturn) {
+      this.newErrors.push(new JackCompilerError(
+        node.nameToken || node.startToken,
+        `Semantic Error: Subroutine '${node.name}' does not return a value in all control paths.`
+      ));
+    }
 
     this.currentSubroutineName = '';
   }
@@ -142,5 +153,28 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
       // IDE target: The undefined type name ('Unknown')
       this.newErrors.push(new JackCompilerError(node.typeToken, error));
     }
+  }
+
+  private doesBlockReturn(statements: JackStatementNode[]): boolean {
+    if (!statements || statements.length === 0) return false;
+
+    for (const stmt of statements) {
+      if (stmt.statementType === JackSpec.RETURN) {
+        return true;
+      }
+      
+      if (stmt.statementType === JackSpec.IF) {
+        const ifStmt = stmt as JackIfStatementNode;
+        const ifReturns = this.doesBlockReturn(ifStmt.ifStatements || []);
+        const elseReturns = this.doesBlockReturn(ifStmt.elseStatements || []);
+        
+        // If both branches return, the whole if/else block acts as a guaranteed return
+        if (ifReturns && elseReturns) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

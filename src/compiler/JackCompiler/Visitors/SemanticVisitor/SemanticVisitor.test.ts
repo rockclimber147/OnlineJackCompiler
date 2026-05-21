@@ -57,6 +57,7 @@ describe('SemanticVisitor', () => {
         field int size;
         method void update(int newSize) {
           let size = newSize;
+          return;
         }
       }
     `;
@@ -82,7 +83,7 @@ describe('SemanticVisitor', () => {
   test('should validate subroutine calls on current class', () => {
     const source = `
       class Game {
-        method void run() { do draw(); }
+        method void run() { do draw(); return; }
         method void draw() { return; }
       }
     `;
@@ -96,6 +97,7 @@ describe('SemanticVisitor', () => {
         function void main() {
           var int x;
           let x = (y + (z * 2));
+          return;
         }
       }
     `;
@@ -245,4 +247,131 @@ describe('SemanticVisitor', () => {
     const errors = validateSource([source]);
     expect(errors.length).toBe(0);
   })
+
+test('should pass when a straight-line subroutine has a return statement', () => {
+    const source = `
+      class Main {
+        function int getNumber() {
+          var int x;
+          let x = 5;
+          return x;
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
+
+  test('should report error when a subroutine is missing a return statement entirely', () => {
+    const source = `
+      class Main {
+        function void noReturn() {
+          var int x;
+          let x = 5;
+          // Missing return;
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes('does not return a value in all control paths'))).toBe(true);
+  });
+
+  test('should pass when both branches of an if/else block guarantee a return', () => {
+    const source = `
+      class Main {
+        function int check(int x) {
+          if (x > 5) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
+
+  test('should report error when an if block lacks an else and has no fallback return', () => {
+    const source = `
+      class Main {
+        function int check(int x) {
+          if (x > 5) {
+            return 1;
+          }
+          // Error: what if x <= 5?
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes('does not return a value in all control paths'))).toBe(true);
+  });
+
+  test('should pass when an if block lacks an else BUT has a fallback return later', () => {
+    const source = `
+      class Main {
+        function int check(int x) {
+          if (x > 5) {
+            return 1;
+          }
+          return 0; // Fallback return catches the remaining path
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
+
+  test('should report error when a return is trapped inside a while loop with no fallback', () => {
+    const source = `
+      class Main {
+        function int loop(int count) {
+          while (count > 0) {
+            return 1; 
+          }
+          // Error: while condition might be false initially, bypassing the return
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes('does not return a value in all control paths'))).toBe(true);
+  });
+
+  test('should pass when a return is in a while loop but also has a safe fallback after the loop', () => {
+    const source = `
+      class Main {
+        function int loop(int count) {
+          while (count > 0) {
+            return 1; 
+          }
+          return 0; // Safe fallback
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
+
+  test('should handle nested if/else logic correctly', () => {
+    const source = `
+      class Main {
+        function int nested(int x, int y) {
+          if (x > 0) {
+            if (y > 0) {
+              return 1;
+            } else {
+              return 2;
+            }
+          } else {
+            return 3;
+          }
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
 });
