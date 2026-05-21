@@ -4,6 +4,7 @@ import { JackParser } from '../../Parser';
 import { SymbolTableVisitor } from './SymbolTableVisitor';
 import { SymbolKind } from './types';
 import { GlobalSymbolTable } from '../../SymbolTable';
+import { JackCompilerError } from '../../../Errors';
 
 describe('SymbolTableVisitor', () => {
   const getTableFromSource = (source: string, fileName: string) => {
@@ -23,6 +24,8 @@ describe('SymbolTableVisitor', () => {
     return parser.parse(fileName);
   };
 
+  // --- Happy Path Tests ---
+
   test('should populate class-level fields and statics', () => {
     const source = `
       class Square {
@@ -33,7 +36,6 @@ describe('SymbolTableVisitor', () => {
       }
     `;
     const globalTable = getTableFromSource(source, 'Square');
-    // Note: You'll need to expose a getClass method or make classes public in GlobalSymbolTable
     const squareTable = (globalTable as any).classes.get('Square');
 
     expect(squareTable.lookupVar('x')).toMatchObject({
@@ -66,14 +68,12 @@ describe('SymbolTableVisitor', () => {
     const drawTable = squareTable.lookupSubroutine('draw');
     const resetTable = squareTable.lookupSubroutine('reset');
 
-    // draw is a method, should have 'this' at ARG 0
     expect(drawTable.lookupVar('this')).toMatchObject({
       kind: SymbolKind.ARG,
       index: 0,
       type: 'Square',
     });
 
-    // reset is a function, 'this' should not exist
     expect(() => resetTable.lookupVar('this')).toThrow();
   });
 
@@ -109,22 +109,11 @@ describe('SymbolTableVisitor', () => {
     const first = testTable.lookupSubroutine('first');
     const second = testTable.lookupSubroutine('second');
 
-    // 'this' is at index 0 for both because they are methods
     expect(first.lookupVar('a').index).toBe(1);
     expect(second.lookupVar('b').index).toBe(1);
 
     expect(first.lookupVar('x').index).toBe(0);
     expect(second.lookupVar('y').index).toBe(1);
-  });
-
-  test('should throw error on duplicate class variable definition', () => {
-    const source = `
-      class Bad {
-        field int x;
-        static int x;
-      }
-    `;
-    expect(() => getTableFromSource(source, 'Bad')).toThrow(/already defined in class scope/);
   });
 
   test('should be ok with multiple valid asts', () => {
@@ -148,27 +137,92 @@ describe('SymbolTableVisitor', () => {
     const table = new GlobalSymbolTable();
     const visitor = new SymbolTableVisitor(table);
 
-    // Visit first AST
     visitor.visit(ast1);
-    // Visit second AST
     const globalTable = visitor.visit(ast2);
 
-    // 1. Verify Square still exists and is correct
     const squareTable = (globalTable as any).classes.get('Square');
     expect(squareTable).toBeDefined();
     expect(squareTable.lookupVar('x').kind).toBe(SymbolKind.FIELD);
     expect(squareTable.lookupSubroutine('main')).toBeDefined();
 
-    // 2. Verify Rectangle was added correctly
     const rectTable = (globalTable as any).classes.get('Rectangle');
     expect(rectTable).toBeDefined();
-    expect(rectTable.lookupVar('width')).toMatchObject({
-      kind: SymbolKind.FIELD,
-      index: 0,
-    });
+    expect(rectTable.lookupVar('width')).toMatchObject({ kind: SymbolKind.FIELD, index: 0 });
     expect(rectTable.lookupSubroutine('init')).toBeDefined();
 
-    // 3. Verify total class count
     expect((globalTable as any).classes.size).toBe(2);
+  });
+
+  test('should throw JackCompilerError on duplicate class variable definition', () => {
+    const source = `
+      class Bad {
+        field int x;
+        static int x; // duplicate
+      }
+    `;
+    try {
+      getTableFromSource(source, 'Bad');
+      expect.fail('Should have thrown an error');
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(JackCompilerError);
+      expect(err.lexeme).toBe('x');
+      expect(err.message).toMatch(/already defined/i);
+    }
+  });
+
+  test('should throw JackCompilerError pointing to duplicate local variable in a single line', () => {
+    const source = `
+      class MathUtils {
+        function void calculate() {
+          var int a, b, c, a; // duplicate 'a'
+          return;
+        }
+      }
+    `;
+    try {
+      getTableFromSource(source, 'MathUtils');
+      expect.fail('Should have thrown an error');
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(JackCompilerError);
+      expect(err.lexeme).toBe('a');
+      expect(err.message).toMatch(/already defined/i);
+    }
+  });
+
+  test('should throw JackCompilerError for local variable shadowing a parameter', () => {
+    const source = `
+      class Process {
+        function void run(int count) {
+          var int i, count; // 'count' conflicts with parameter
+          return;
+        }
+      }
+    `;
+    try {
+      getTableFromSource(source, 'Process');
+      expect.fail('Should have thrown an error');
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(JackCompilerError);
+      expect(err.lexeme).toBe('count');
+      expect(err.message).toMatch(/already defined/i);
+    }
+  });
+
+  test('should throw JackCompilerError for duplicate parameters', () => {
+    const source = `
+      class Math {
+        function int add(int x, int x) { // duplicate parameter
+          return x;
+        }
+      }
+    `;
+    try {
+      getTableFromSource(source, 'Math');
+      expect.fail('Should have thrown an error');
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(JackCompilerError);
+      expect(err.lexeme).toBe('x');
+      expect(err.message).toMatch(/already defined/i);
+    }
   });
 });
