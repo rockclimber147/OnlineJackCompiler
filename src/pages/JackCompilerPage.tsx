@@ -9,7 +9,7 @@ import { JackSymbolTableViewer } from "../components/JackSymbolTableViewer";
 
 import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
-import { copyToClipboard, downloadFile } from "../utils/FileActions";
+import { copyToClipboard, copyWorkspaceToClipboard, downloadAllFilesAsZip, downloadFile, pasteWorkspaceFromClipboard } from "../utils/FileActions";
 
 export function JackCompilerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
@@ -17,7 +17,7 @@ export function JackCompilerPage() {
 
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
-    addFile, updateActiveFile, uploadFiles, renameFile, deleteFile 
+    addFile, updateActiveFile, uploadFiles, renameFile, deleteFile, importFiles
   } = useVFS({
     initialFiles: [{
       id: crypto.randomUUID(),
@@ -43,6 +43,16 @@ export function JackCompilerPage() {
     if (success) addLog("Copied to clipboard.", "success");
   };
 
+  const handlePasteSourceFiles = async () => {
+    const imported = await pasteWorkspaceFromClipboard();
+    if (imported) {
+      const count = importFiles(imported, ".jack", "jack");
+      addLog(`Pasted ${count} Jack files from clipboard.`, "success");
+    } else {
+      addLog("Clipboard does not contain valid workspace data.", "error");
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -61,7 +71,16 @@ export function JackCompilerPage() {
                 onDeleteFile={deleteFile}
                 title="JACK FILES"
                 acceptedExtensions=".jack"
-                errors={compilerErrors} // <-- Hooked up global errors here
+                errors={compilerErrors}
+                onPasteAll={handlePasteSourceFiles}
+                onDownloadAll={() => {
+                          downloadAllFilesAsZip(compiledFiles, "compiled-vm-files.zip");
+                          addLog("Downloaded compiled VM files as zip.", "success");
+                        }}
+                onCopyAll={async () => {
+                  const success = await copyWorkspaceToClipboard(files);
+                  if (success) addLog(`Copied ${files.length} Jack files to clipboard.`, "success");
+                }}
               />
             </Panel>
 
@@ -134,6 +153,14 @@ export function JackCompilerPage() {
                         onRenameFile={() => {}}
                         onDeleteFile={() => {}}
                         readOnly={true}
+                        onDownloadAll={() => {
+                          downloadAllFilesAsZip(compiledFiles, "compiled-vm-files.zip");
+                          addLog("Downloaded compiled VM files as zip.", "success");
+                        }}
+                        onCopyAll={async () => {
+                          const success = await copyWorkspaceToClipboard(compiledFiles);
+                          if (success) addLog(`Copied ${compiledFiles.length} compiled VM files to clipboard. Ready to paste in the VM Translator!`, "success");
+                        }}
                       />
                     </Panel>
                     <Separator className="w-1 bg-black/20 hover:bg-indigo-600 transition-colors cursor-col-resize" />

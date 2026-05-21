@@ -32,7 +32,6 @@ export function useVFS({ initialFiles = [] }: UseVFSProps = {}) {
     setFiles(prev => prev.map(f => f.id === fileId ? { ...f, hasError } : f));
   };
 
-  // NEW: Accept onLog directly in the action function, not at hook initialization
   const uploadFiles = async (
     fileList: FileList, 
     allowedExtension: string, 
@@ -86,5 +85,22 @@ export function useVFS({ initialFiles = [] }: UseVFSProps = {}) {
       setActiveFileId(null);
     }
   };
-  return { files, activeFileId, setActiveFileId, activeFile, addFile, updateActiveFile, uploadFiles, setFileError, renameFile, deleteFile };
+
+  const importFiles = (importedFiles: {name: string, content: string}[], extension: string, language: string) => {
+    const newFiles = importedFiles
+      .filter(f => f.name.endsWith(extension))
+      .map(f => ({
+        id: crypto.randomUUID(),
+        name: f.name,
+        content: f.content,
+        language
+      }));
+
+    if (newFiles.length > 0) {
+      setFiles(prev => [...prev, ...newFiles]);
+      setActiveFileId(newFiles[0].id);
+    }
+    return newFiles.length; // return how many were successfully imported
+  };
+  return { files, activeFileId, setActiveFileId, activeFile, addFile, updateActiveFile, uploadFiles, importFiles, setFileError, renameFile, deleteFile };
 }

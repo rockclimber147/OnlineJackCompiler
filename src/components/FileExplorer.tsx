@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { FileCode2, Trash2, Pencil, Upload, FolderOpen, FilePlus } from "lucide-react";
+import { FileCode2, Trash2, Pencil, Upload, FolderOpen, FilePlus, FolderDown, Copy, ClipboardPaste } from "lucide-react";
 import { type VirtualFile } from "../types/Vfs";
 import { type CompilerError } from "../types/Compiler";
 
@@ -11,6 +11,9 @@ interface FileExplorerProps {
   onUploadFiles: (files: FileList) => void;
   onRenameFile: (id: string, newName: string) => void;
   onDeleteFile: (id: string) => void;
+  onDownloadAll?: () => void;
+  onCopyAll?: () => void;
+  onPasteAll?: () => void;
   title?: string;
   acceptedExtensions?: string;
   readOnly?: boolean;
@@ -25,6 +28,9 @@ export function FileExplorer({
   onUploadFiles,
   onRenameFile,
   onDeleteFile,
+  onDownloadAll,
+  onCopyAll,
+  onPasteAll,
   title = "EXPLORER",
   acceptedExtensions = ".txt",
   readOnly = false,
@@ -107,19 +113,40 @@ export function FileExplorer({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 tracking-wider">
         <span>{title}</span>
-        {!readOnly && (
           <div className="flex items-center gap-1">
-            <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="New File">
-              <FilePlus size={14} />
+          {/* Write Actions: Hidden if readOnly is true */}
+          {!readOnly && (
+            <>
+              <button onClick={handleManualAdd} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="New File">
+                <FilePlus size={14} />
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Files">
+                <Upload size={14} />
+              </button>
+              <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Folder">
+                <FolderOpen size={14} />
+              </button>
+              {onPasteAll && (
+                <button onClick={onPasteAll} title="Paste files from clipboard" className="hover:text-indigo-400 transition-colors cursor-pointer">
+                  <ClipboardPaste size={14} />
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Read Actions: Always visible if the handlers and files exist */}
+          {onCopyAll && files.length > 0 && (
+            <button onClick={onCopyAll} title="Copy all files to clipboard" className="hover:text-indigo-400 transition-colors cursor-pointer">
+              <Copy size={14} />
             </button>
-            <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Files">
-              <Upload size={14} />
+          )}
+          
+          {onDownloadAll && files.length > 0 && (
+            <button onClick={onDownloadAll} title="Download Folder as ZIP" className="hover:text-indigo-400 transition-colors cursor-pointer">
+              <FolderDown size={14} />
             </button>
-            <button onClick={() => folderInputRef.current?.click()} className="p-1 hover:bg-slate-700 rounded hover:text-slate-200 transition-colors" title="Upload Folder">
-              <FolderOpen size={14} />
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* File List */}

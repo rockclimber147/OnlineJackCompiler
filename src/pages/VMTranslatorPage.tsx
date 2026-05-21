@@ -9,12 +9,12 @@ import { VMSymbolTableViewer } from "../components/VMSymbolTableViewer";
 
 import { useVFS } from "../hooks/useVFS";
 import { useVMTranslator } from "../hooks/useVMTranslator";
-import { copyToClipboard, downloadFile } from "../utils/FileActions";
+import { copyToClipboard, copyWorkspaceToClipboard, downloadAllFilesAsZip, downloadFile, pasteWorkspaceFromClipboard } from "../utils/FileActions";
 
 export function VMTranslatorPage() {
   const { 
     files, activeFileId, setActiveFileId, activeFile, 
-    addFile, updateActiveFile, uploadFiles, renameFile, deleteFile 
+    addFile, importFiles, updateActiveFile, uploadFiles, renameFile, deleteFile 
   } = useVFS({
     initialFiles: [{
       id: crypto.randomUUID(),
@@ -40,6 +40,16 @@ export function VMTranslatorPage() {
     if (success) addLog("Copied to clipboard.", "success");
   };
 
+  const handlePasteSourceFiles = async () => {
+    const imported = await pasteWorkspaceFromClipboard();
+    if (imported) {
+      const count = importFiles(imported, ".vm", "hackvm");
+      addLog(`Pasted ${count} VM files from clipboard.`, "success");
+    } else {
+      addLog("Clipboard does not contain valid workspace data.", "error");
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -60,6 +70,15 @@ export function VMTranslatorPage() {
                 title="WORKSPACE"
                 acceptedExtensions=".vm"
                 errors={compilerErrors}
+                onPasteAll={handlePasteSourceFiles}
+                onDownloadAll={() => {
+                  downloadAllFilesAsZip(files, "vm-files.zip");
+                  addLog("Downloaded VM files as zip.", "success");
+                }}
+                onCopyAll={async () => {
+                  const success = await copyWorkspaceToClipboard(files);
+                  if (success) addLog(`Copied ${files.length} VM files to clipboard.`, "success");
+                }}
               />
             </Panel>
 
