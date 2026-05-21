@@ -19,6 +19,7 @@ import type {
 import { JackSpec } from '../../../../languages/jack/JackSpec';
 import { GlobalSymbolTable } from '../../SymbolTable';
 import type { SymbolEntry } from '../SymbolTableVisitor/types';
+import { JackCompilerError } from '../../../Errors';
 
 export class CodeWriterVisitor extends JackVisitorAll<void> {
   private vmOutput: string[] = [];
@@ -85,17 +86,34 @@ export class CodeWriterVisitor extends JackVisitorAll<void> {
 
   // --- Statements ---
 
-  protected override visitLetStatement(node: JackLetStatementNode): void {
-    // Note: If you add array indexing (let a[i] = expr) to your compiler, 
-    // you will need to handle the pointer 1 and that 0 logic here using node.indexExpression
-    
-    // Evaluate RHS
-    this.visit(node.valueExpression);
-
+protected override visitLetStatement(node: JackLetStatementNode): void {
     const symbol = this.lookupSymbol(node.varName);
-    if (!symbol) throw new Error(`Undeclared variable ${node.varName}`);
+    if (!symbol) {
+      throw new JackCompilerError(
+        node.varNameToken || node.startToken, 
+        `Code Generation Error: Undeclared variable '${node.varName}'`
+      );
+    }
 
-    this.writeCmd(`pop ${this.segmentName(symbol.kind)} ${symbol.index}`);
+    if (node.indexExpression) {
+      this.writeCmd(`push ${this.segmentName(symbol.kind)} ${symbol.index}`);
+      this.visit(node.indexExpression);
+      this.writeCmd('add'); 
+      
+      // Evaluate the RHS expression
+      this.visit(node.valueExpression);
+      
+      // Safely move the RHS value into the target address
+      this.writeCmd('pop temp 0');    // Store RHS value in temp 0
+      this.writeCmd('pop pointer 1'); // Set THAT pointer to the target address
+      this.writeCmd('push temp 0');   // Restore RHS value
+      this.writeCmd('pop that 0');    // Store it in the array!
+
+    } else {
+      // 2. Standard Variable Write: let a = value
+      this.visit(node.valueExpression);
+      this.writeCmd(`pop ${this.segmentName(symbol.kind)} ${symbol.index}`);
+    }
   }
 
   protected override visitIfStatement(node: JackIfStatementNode): void {
@@ -216,8 +234,10 @@ export class CodeWriterVisitor extends JackVisitorAll<void> {
     this.writeCmd(`push ${this.segmentName(symbol.kind)} ${symbol.index}`);
     
     if (node.arrayIndex) {
-      // TODO: Implement Array Read (a[i])
-      this.visit(node.arrayIndex);
+      this.visit(node.arrayIndex); 
+      this.writeCmd('add');         
+      this.writeCmd('pop pointer 1');
+      this.writeCmd('push that 0');
     }
   }
 
@@ -262,8 +282,6 @@ export class CodeWriterVisitor extends JackVisitorAll<void> {
 
     this.writeCmd(`call ${callTarget} ${argCount}`);
   }
-
-  // --- Symbol Resolution Utilities ---
 
   private lookupSymbol(name: string): SymbolEntry | undefined {
     // Utilize the private findVar method safely via casting
