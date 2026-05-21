@@ -90,4 +90,108 @@ describe('SemanticVisitor', () => {
     const errors = validateSource([source]);
     expect(errors.length).toBe(2);
   });
+
+// --- Multi-Source Happy Paths ---
+
+  test('should allow valid cross-class method and function calls', () => {
+    const sourceA = `
+      class Game {
+        function void init() {
+          var Player p;
+          let p = Player.new();
+          do p.move(); // Valid: calling method on instance
+          return;
+        }
+        
+        function void beep() { return; }
+      }
+    `;
+    const sourceB = `
+      class Player {
+        constructor Player new() { return this; }
+        
+        method void move() {
+          do Game.beep(); // Valid: calling function via Class name
+          return;
+        }
+      }
+    `;
+    const errors = validateSource([sourceA, sourceB]);
+    expect(errors.length).toBe(0);
+  });
+
+  // --- Multi-Source Unhappy Paths ---
+
+  test('should report error when calling a method using a class name instead of an instance', () => {
+    const sourceA = `
+      class Main {
+        function void main() {
+          do Utils.print(); // Error: print is a method, not a function
+          return;
+        }
+      }
+    `;
+    const sourceB = `
+      class Utils {
+        method void print() { return; }
+      }
+    `;
+    const errors = validateSource([sourceA, sourceB]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Method 'print' must be called using an instance"))).toBe(true);
+  });
+
+  test('should report error when calling a function using an object instance', () => {
+    const sourceA = `
+      class Main {
+        function void main() {
+          var MathUtils u;
+          do u.calculate(); // Error: calculate is static, must use MathUtils.calculate()
+          return;
+        }
+      }
+    `;
+    const sourceB = `
+      class MathUtils {
+        function void calculate() { return; }
+      }
+    `;
+    const errors = validateSource([sourceA, sourceB]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Function 'calculate' must be called using the class name"))).toBe(true);
+  });
+
+  test('should report error when calling a non-existent subroutine on another class', () => {
+    const sourceA = `
+      class Main {
+        function void main() {
+          do Helper.doesNotExist();
+          return;
+        }
+      }
+    `;
+    const sourceB = `
+      class Helper {
+        function void exists() { return; }
+      }
+    `;
+    const errors = validateSource([sourceA, sourceB]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Subroutine 'doesNotExist' does not exist in class 'Helper'"))).toBe(true);
+  });
+
+  test('should report error when calling a subroutine on an undefined class', () => {
+    const source = `
+      class Main {
+        function void main() {
+          do UnknownClass.run();
+          return;
+        }
+      }
+    `;
+    // We only pass one source, so 'UnknownClass' won't be in the global symbol table
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Class 'UnknownClass' is not defined"))).toBe(true);
+  });
 });
