@@ -17,7 +17,7 @@ export interface JackClassVarDecNode extends ASTNode {
   type: string;
   typeToken: Token;
   names: string[];
-//   nameTokens: Token[];
+  nameTokens: Token[];
 }
 
 export type SubroutineKind =
@@ -55,7 +55,7 @@ export interface JackSubroutineVarDecNode extends ASTNode {
   type: string;
   typeToken: Token;
   names: string[];
-//   nameTokens: Token[];
+  nameTokens: Token[];
 }
 
 export type JackStatementNode =

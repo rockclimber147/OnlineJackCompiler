@@ -132,16 +132,13 @@ export class ClassLevelTable {
   private vars = new Map<string, SymbolEntry>();
   private subroutines = new Map<string, SubroutineLevelTable>();
   private counts: Record<ClassVarKind, number> = { STATIC: 0, FIELD: 0 };
-
-  // 1. Explicitly declare the fields here
   public readonly className: string;
   private isBuiltIn: boolean;
 
   constructor(
-    className: string,          // 2. Remove 'public readonly'
-    isBuiltIn: boolean = false, // 2. Remove 'private'
+    className: string,
+    isBuiltIn: boolean = false,
   ) {
-    // 3. Explicitly assign them
     this.className = className;
     this.isBuiltIn = isBuiltIn;
   }

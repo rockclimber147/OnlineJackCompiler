@@ -41,7 +41,7 @@ export abstract class BaseParser<T_AST> {
 
   protected match(type: TokenType, lexeme?: string): boolean {
     if (this.check(type, lexeme)) {
-      this.validator.expectType(type); // Advances the cursor
+      this.validator.expectType(type);
       return true;
     }
     return false;
@@ -111,11 +111,17 @@ export class JackParser extends BaseParser<JackClassNode> {
       type = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
     }
 
+    const nameTokens: Token[] = [];
     const names: string[] = [];
-    names.push(this.validator.expectType(TokenType.IDENTIFIER).lexeme);
+    let identifierToken = this.validator.expectType(TokenType.IDENTIFIER);
+
+    nameTokens.push(identifierToken)
+    names.push(identifierToken.lexeme);
 
     while (this.match(TokenType.SYMBOL, JackSpec.COMMA)) {
-      names.push(this.validator.expectType(TokenType.IDENTIFIER).lexeme);
+      identifierToken = this.validator.expectType(TokenType.IDENTIFIER);
+      nameTokens.push(identifierToken)
+      names.push(identifierToken.lexeme);
     }
 
     const endToken = this.validator.expectLexeme(JackSpec.SEMI);
@@ -128,6 +134,7 @@ export class JackParser extends BaseParser<JackClassNode> {
       varKind,
       type,
       names,
+      nameTokens
     };
   }
 
@@ -231,11 +238,17 @@ export class JackParser extends BaseParser<JackClassNode> {
       type = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
     }
 
+    const nameTokens: Token[] = [];
     const names: string[] = [];
-    names.push(this.validator.expectType(TokenType.IDENTIFIER).lexeme);
+    let identifierToken = this.validator.expectType(TokenType.IDENTIFIER);
+
+    nameTokens.push(identifierToken)
+    names.push(identifierToken.lexeme);
 
     while (this.match(TokenType.SYMBOL, JackSpec.COMMA)) {
-      names.push(this.validator.expectType(TokenType.IDENTIFIER).lexeme);
+      identifierToken = this.validator.expectType(TokenType.IDENTIFIER);
+      nameTokens.push(identifierToken)
+      names.push(identifierToken.lexeme);
     }
 
     const endToken = this.validator.expectLexeme(JackSpec.SEMI);
@@ -248,6 +261,7 @@ export class JackParser extends BaseParser<JackClassNode> {
       varKind,
       type,
       names,
+      nameTokens
     };
   }
 
