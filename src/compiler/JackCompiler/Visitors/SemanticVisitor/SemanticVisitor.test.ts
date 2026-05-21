@@ -194,6 +194,34 @@ describe('SemanticVisitor', () => {
     expect(errors.some((e) => e.message.includes("Class 'UnknownClass' is not defined"))).toBe(true);
   });
 
+  test('should report error when defining a class variable of undefined type', () => {
+    const source = `
+      class Main {
+        field Unknown u;
+        function void main() {
+          return;
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Class 'Unknown' is not defined"))).toBe(true);
+  });
+
+  test('should report error when defining a subroutine variable of undefined type', () => {
+    const source = `
+      class Main {
+        function void main() {
+          var Unknown u;
+          return;
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("Class 'Unknown' is not defined"))).toBe(true);
+  });
+
   test('args are correctly identiffied', () => {
     const source = `
     class Main {

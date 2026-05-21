@@ -38,6 +38,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
   protected override visitClass(node: JackClassNode): void {
     this.currentClassName = node.name;
     this.newErrors = [];
+    node.classVarDecs?.forEach((varDec) => this.visit(varDec));
     node.subroutines.forEach((subroutine) => this.visit(subroutine));
     this.errors.push(...this.newErrors);
     this.currentClassName = '';
@@ -46,8 +47,8 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
   protected override visitSubroutine(node: JackSubroutineNode): void {
     this.currentSubroutineName = node.name;
 
-    this.visitMany(node.body.statements);
     this.visitMany(node.body.varDecs);
+    this.visitMany(node.body.statements);
 
     this.currentSubroutineName = '';
   }
@@ -112,5 +113,13 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
   protected visitIntegerLiteral(): void {}
   protected visitStringLiteral(): void {}
   protected visitKeywordLiteral(): void {}
-  protected visitVarDec(): void {}
+  protected override visitVarDec(node: any): void {
+    const typeName = typeof node.type === 'string' ? node.type : node.type.lexeme;
+    
+    const error = this.table.validateType(typeName);
+    
+    if (error) {
+      this.newErrors.push(new JackCompilerError(node.endToken, error));
+    }
+  }
 }

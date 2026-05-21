@@ -103,6 +103,15 @@ export class GlobalSymbolTable extends BaseSymbolTable {
     }
   }
 
+  public validateType(typeName: string): string | null {
+    const primitives = ['int', 'char', 'boolean', 'void'];
+    if (primitives.includes(typeName)) return null;
+    
+    if (this.classes.has(typeName)) return null;
+    
+    return `Class '${typeName}' is not defined.`;
+  }
+
   public toVisual(): SymbolScope {
     const children: Record<string, SymbolScope> = {};
     this.classes.forEach((table, name) => {
