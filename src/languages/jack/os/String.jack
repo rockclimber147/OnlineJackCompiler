@@ -11,140 +11,146 @@
  * string-oriented operations.
  */
 class String {
-    field int length;
-    field int capacity;
-    field Array byteArray;
+	
+	field int _maxLength;
+	field int length;
+	field Array chars;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
-        if (maxLength < 1) {
-            let maxLength = 1;
-        }
-
-        let byteArray = Array.new(maxLength);
-        let length = 0;
-        let capacity = maxLength;
-
-        return this;
+		if(maxLength < 0){
+			do Sys.error(14);
+		}
+		if(maxLength > 0){
+			let chars = Array.new(maxLength);
+		}
+		let _maxLength = maxLength;
+		
+		return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
-        do byteArray.dispose();
-
-        return;
+		if(~(chars = 0)){
+			do chars.dispose();
+		}
+		do Memory.deAlloc(this);
+		return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
-        return length;
+		return length;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
-        return byteArray[j];
+		if((j < 0) | (~(j < length))){
+			do Sys.error(15);
+		}
+		return chars[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
-        let byteArray[j] = c;
-        return;
+		if((j < 0) | (~(j < length))){
+			do Sys.error(16);			
+		}
+		let chars[j] = c;
+		return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
-        if (length < capacity) {
-            let byteArray[length] = c;
-            let length = length + 1;
-        }
-
-        return this;
+		if(_maxLength = length){
+			do Sys.error(17);			
+		}
+		let chars[length] = c;
+		let length = length + 1;
+		return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
-        if (length > 0) {
-            let length = length - 1;
-        }
-
-        return;
+		if(length = 0){
+			do Sys.error(18);			
+		}
+		let length = length - 1;
+		return;
     }
-
-    /** Returns the integer value of this string,
+	
+		
+    /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
-        var int index, result;
-        var boolean neg;
-
-        if ((length > 0) & (byteArray[0] = 45)) {
-            let neg = true;
-            let index = 1;
-        } else {
-            let neg = false;
-            let index = 0;
-        }
-
-        let result = 0;
-
-        while ((index < length) & String.isDigit(byteArray[index])) {
-            let result = result * 10 + (byteArray[index] - 48);
-            let index = index + 1;
-        }
-
-        if (neg) {
-            let result = -result;
-        }
-
-        return result;
-    }
-
-    function boolean isDigit(char c) {
-        return ((c > 47) & (c < 58));
+		var int ret, i, sign;
+		while(i < length){
+			if(i = 0){
+				if(chars[i] = 45){
+					let sign = -1;
+				} else {
+					let sign = 1;
+					if((chars[i] > 47) & (chars[i] < 58)){
+						let ret = (10 * ret) + chars[i] - 48;
+					} else {
+						return ret;
+					}
+				}
+			} else {
+				if((chars[i] > 47) & (chars[i] < 58)){
+					let ret = (10 * ret) + chars[i] - 48;
+				} else {
+					return ret;
+				}
+			}
+			let i = i + 1;
+		}
+		return ret * sign;
     }
 
     /** Sets this string to hold a representation of the given value. */
-    method void setInt(int val) {
-        let length = 0;
-
-        if (val < 0) {
-            let val = -val;
-            do appendChar(45);
-        }
-
-        do setIntHelper(val);
-
-        return;
+    method void setInt(int value) {
+		var int divisor;
+		let length = 0;
+		if(value < 0){
+			do appendChar(45);  // minus
+			let value = -value;
+		} 
+		do addDigits(value);
+		
+		return;
     }
-
-    method void setIntHelper(int number) {
-        var int nextNum, lastDigit;
-
-        if (number < 10) {
-            do appendChar(48 + number);
-            return;
-        }
-
-        let nextNum = (number / 10);
-        let lastDigit = number - (nextNum * 10);
-        do setIntHelper(nextNum);
-        do appendChar(48 + lastDigit);
-
-        return;
+	
+	function int mod(int x, int y){
+		return x - ((x / y) * y);
+	}
+	
+    method void addDigits(int value) {
+		if(_maxLength = 0){
+			do Sys.error(19);			
+		}
+		if(value < 10){
+			do appendChar(value + 48);
+		} else {
+			do addDigits(value / 10);
+			do appendChar(String.mod(value, 10) + 48);
+		}
+		return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
-        return 128;
+		return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
-        return 129;
+		return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
-        return 34;
+		return 34;
     }
 }
