@@ -37,7 +37,6 @@ export function AssemblerPage() {
     if (success) addLog("Copied to clipboard.", "success");
   };
 
-  // NEW: Handle Add File with Duplicate Protection
   const handleAddFile = (name: string) => {
     const success = addFile(name, ".asm", "hackasm");
     if (success) {
@@ -48,7 +47,6 @@ export function AssemblerPage() {
     }
   };
 
-  // NEW: Handle Rename File with Duplicate Protection
   const handleRenameFile = (id: string, newName: string) => {
     const success = renameFile(id, newName);
     if (success) {
@@ -82,7 +80,7 @@ export function AssemblerPage() {
                 onRenameFile={handleRenameFile} // <-- Updated
                 onDeleteFile={deleteFile}
                 title="WORKSPACE"
-                acceptedExtensions=".asm,.txt"
+                acceptedExtensions=".asm"
                 errors={compilerErrors}
               />
             </Panel>
