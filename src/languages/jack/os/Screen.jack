@@ -1,0 +1,316 @@
+class Screen {
+    static boolean color;
+    static int screenBase;
+    static int screenWidth, screenHeight;
+    static Array bitAt, fillByteFrom, fillByteTo;   // Efficient bit operations
+    static Array div16, mul32, pow2;                // Efficient arithematic operations
+
+
+    /** Initializes the Screen. */
+    function void init() {
+        var int i;
+
+        let screenBase = 16384;
+        let screenWidth = 512;
+        let screenHeight = 256;
+
+        // We start with a black color
+        let color = true;
+
+        let bitAt = Array.new(16);
+        let fillByteFrom = Array.new(16);
+        let fillByteTo = Array.new(16);
+        let div16 = Array.new(screenWidth + 1);
+        let mul32 = Array.new(screenHeight);
+        let pow2 = Array.new(182);
+
+        // Fill bitAt
+        let bitAt[0] = 1;
+        let i = 1;
+        while (i < 16) {
+            let bitAt[i] = bitAt[i-1] + bitAt[i-1];
+            let i = i + 1;
+        }
+
+        // Fill fillByteFrom, fillByteTo
+        let fillByteFrom[0] = -1;
+        let fillByteTo[0] = 0;
+        let i = 1;
+        while (i < 16) {
+            let fillByteTo[i] = fillByteTo[i - 1] | bitAt[i - 1];
+            let fillByteFrom[i] = ~(fillByteTo[i]);
+            let i = i + 1;
+        }
+
+        // Fill div16, mul32
+        let i = 0;
+        while (i < (screenWidth + 1)) {
+            let div16[i] = i / 16;
+            let i = i + 1;
+        }
+
+        let mul32[0] = 0;
+        let i = 1;
+        while (i < screenHeight) {
+            let mul32[i] = mul32[i - 1] + 32;
+            let i = i + 1;
+        }
+
+        // Fill pow2
+        let pow2[0] = 0;
+        let i = 1;
+        while (i < 182) {
+            let pow2[i] = pow2[i - 1] + ((i + i) - 1);
+            let i = i + 1;
+        }
+
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int currentAddress, screenEnd;
+        let currentAddress = screenBase;
+        let screenEnd = screenBase + 8160;
+
+        while (currentAddress < screenEnd) {
+            do Memory.poke(currentAddress, 0);
+            let currentAddress = currentAddress + 1;
+        }
+
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        let color = b;
+        return;
+    }
+
+    function void drawPixelsAt(int screenOffset, int mask) {
+        var int address;
+        var int original_content;
+
+        let address = screenBase + screenOffset;
+        let original_content = Memory.peek(address);
+
+        if (color) {
+            do Memory.poke(address, original_content | mask);
+        }
+
+        else {
+            do Memory.poke(address, original_content & ~mask);
+        }
+
+        return;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        var int screenOffset;
+        var int bit;
+
+        // Invalid pixel coordinates
+        if ((x < 0) | (x > (screenWidth - 1)) | (y < 0) | (y > (screenWidth - 1))) {
+            // Illegal pixel coordinates error
+            do Sys.error(7);
+            // Unreachable code
+        }
+
+        let screenOffset = mul32[y] + div16[x];
+        let bit = x & 15;   // x & 0b1111, x's lowest 4 bits
+        do Screen.drawPixelsAt(screenOffset, bitAt[bit]);
+
+        return;
+    }
+
+    function void drawHorizontalLine(int x1, int x2, int y) {
+        var int currentX, endX;
+        var int startBit, endBit;
+        var int currentByte, endByte;
+
+        let currentX = x1;
+        let endX = x2 + 1;
+        let startBit = currentX & 15;       // currentX & 0b1111, currentX's lowest 4 bits
+        let endBit = endX & 15;             // endX & 0b1111, endX's lowest 4 bits
+        let currentByte = mul32[y] + div16[currentX];
+        let endByte = mul32[y] + div16[endX];
+
+        // Handle special case where currentByte = endByte
+        if (currentByte = endByte) {
+            do Screen.drawPixelsAt(currentByte, fillByteFrom[startBit] & fillByteTo[endBit]);
+            return;
+        }
+
+        // Draw first byte
+        if (startBit > 0) {
+            do Screen.drawPixelsAt(currentByte, fillByteFrom[startBit]);
+            let currentByte = currentByte + 1;
+        }
+
+        // Draw all remaining bytes except for the last
+        while (currentByte < endByte) {
+            do Screen.drawPixelsAt(currentByte, -1);
+            let currentByte = currentByte + 1;
+        }
+
+        // Draw last byte
+        do Screen.drawPixelsAt(endByte, fillByteTo[endBit]);
+
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        var int currentX, currentY;
+        var int endX, endY;
+        var int ydxMinusxdy;
+        var int dx, dy;
+
+        if (((Math.min(x1,x2) < 0) | (Math.min(y1,y2) < 0)) |
+            ((Math.max(x1,x2) > 511) | (Math.max(y1,y2) > 511))) { 
+                // Illegal line coordinates error
+                do Sys.error(8);
+                // Unreachable code
+        }
+
+        // Handle horizontal line drawing
+        if (y1 = y2) {
+            if (x2 > x1) {
+                do Screen.drawHorizontalLine(x1, x2, y1);
+            }
+
+            else {
+                do Screen.drawHorizontalLine(x2, x1, y1);
+            }
+            return;
+        }
+
+        // Handle vertical line drawing
+        if (x1 = x2) {
+            let currentY = Math.min(y1, y2);
+            let endY = Math.max(y1, y2) + 1;
+
+            while (currentY < endY) {
+                do Screen.drawPixel(x1, currentY);
+                let currentY = currentY + 1;
+            }
+
+            return;
+        }
+
+        if (x1 > x2) {
+            let currentX = x2;
+            let currentY = y2;
+            let endX = x1 + 1;
+            let endY = y1;
+        }
+
+        else {
+            let currentX = x1;
+            let currentY = y1;
+            let endX = x2 + 1;
+            let endY = y2;
+        }
+
+        let dx = endX - currentX + 1;
+        let dy = endY - currentY;   // Can be negative
+        let ydxMinusxdy = 0;
+
+        if (endY > currentY) {
+            // Handle an ascending line
+            let endY = endY + 1;
+            while ((currentX < endX) & (currentY < endY)) {
+                do Screen.drawPixel(currentX, currentY);
+
+                if (ydxMinusxdy < 0) {
+                    // We are slightly below the line, go up
+                    let currentY = currentY + 1;
+                    let ydxMinusxdy = ydxMinusxdy + dx;
+                }
+
+                else {
+                    // We are slightly above the line, go down
+                    let currentX = currentX + 1;
+                    let ydxMinusxdy = ydxMinusxdy - dy;
+                }
+            }
+        }
+
+        else {
+            // Handle a descending line
+            let endY = endY - 1;
+            while ((currentX < endX) & (currentY > endY)) {
+                do Screen.drawPixel(currentX, currentY);
+
+                if (ydxMinusxdy < 0) {
+                    // We are slightly below the line, go up
+                    let currentX = currentX + 1;
+                    let ydxMinusxdy = ydxMinusxdy - dy;
+                }
+
+                else {
+                    // We are slightly above the line, go down
+                    let currentY = currentY - 1;
+                    let ydxMinusxdy = ydxMinusxdy - dx;
+                }
+            }
+        }
+
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int x, y;
+
+        if ((x1 < 0) | (y1 < 0) | (x1 > 511) | (y1 > 511) 
+           |(x2 < 0) | (y2 < 0) | (x2 > 511) | (y2 > 511)){ 
+                //Illegal rectangle coordinates
+                do Sys.error(9);
+                // Unreachable code
+        }
+
+
+        let y = y1;
+        while (y < (y2 + 1)) {
+            // Draw all pixels in line
+            do Screen.drawHorizontalLine(x1, x2, y);
+
+            // Move to the next line
+            let y = y + 1;
+        }
+        return;
+    }
+       
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        var int dx, dy, rpow2;
+        if ((x < 0) | (y < 0) | (x > 511) | (y > 511)){ 
+            //Illegal circle coordinates
+            do Sys.error(12);
+            }
+        if (( (x -r) < 0) | ((y - r) < 0) | ((x + r) > 255 ) |  ((x + r) > 255 )){
+            //illegal radius
+            do Sys.error(13);
+            }
+        let dy = -r;
+        while (dy < 0) {
+            let dx = Math.sqrt(pow2[r] - pow2[-dy]);
+            do Screen.drawHorizontalLine(x - dx, x + dx, y + dy);
+
+            let dy = dy + 1;
+        }
+
+        while (dy < (r + 1)) {
+            let dx = Math.sqrt(pow2[r] - pow2[dy]);
+            do Screen.drawHorizontalLine(x - dx, x + dx, y + dy);
+
+            let dy = dy + 1;
+        }
+
+        return;
+    }
+}

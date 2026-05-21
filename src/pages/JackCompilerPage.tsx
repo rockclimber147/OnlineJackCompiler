@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import { Play, Copy, Download } from "lucide-react";
+import { Play, Copy, Download, Database } from "lucide-react";
 
 import { CodeDisplay } from "../components/CodeDisplay";
 import { Console } from "../components/Console";
@@ -10,6 +10,7 @@ import { JackSymbolTableViewer } from "../components/JackSymbolTableViewer";
 import { useVFS } from "../hooks/useVFS";
 import { useJackCompiler } from "../hooks/useJackCompiler";
 import { copyToClipboard, copyWorkspaceToClipboard, downloadAllFilesAsZip, downloadFile, pasteWorkspaceFromClipboard } from "../utils/FileActions";
+import { JACK_OS_FILES } from "../constants/JackOS";
 
 export function JackCompilerPage() {
   const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
@@ -50,6 +51,23 @@ export function JackCompilerPage() {
       addLog(`Pasted ${count} Jack files from clipboard.`, "success");
     } else {
       addLog("Clipboard does not contain valid workspace data.", "error");
+    }
+  };
+
+  const handleLoadOS = () => {
+    const existingFileNames = new Set(files.map(f => f.name));
+    
+    const filesToAdd = JACK_OS_FILES.filter(osFile => !existingFileNames.has(osFile.name));
+
+    if (filesToAdd.length === 0) {
+      addLog("All Jack OS files are already in the workspace.", "info");
+      return;
+    }
+
+    const count = importFiles(filesToAdd, ".jack", "jack");
+    
+    if (count > 0) {
+      addLog(`Loaded ${count} Jack OS files into the workspace.`, "success");
     }
   };
 
@@ -131,6 +149,13 @@ export function JackCompilerPage() {
                 </div>
 
                 <div className="flex items-center px-3">
+                  <button 
+                    onClick={handleLoadOS} 
+                    className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-md text-[11px] font-semibold transition tracking-wide cursor-pointer"
+                    title="Load standard OS libraries"
+                  >
+                    <Database size={12} /> Load OS
+                  </button>
                   <button onClick={handleCompileClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-md text-[11px] font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
                     <Play size={12} fill="currentColor" /> Compile Jack
                   </button>
