@@ -4,7 +4,7 @@ import { type VirtualFile } from "../../types/Vfs";
 import { type CompilerError } from "../../types/Compiler"; 
 import { type JackClassNode } from "./AST";
 import { JackCompilerError } from "../Errors";
-import { GlobalSymbolTable } from "./Visitors/SymbolTableVisitor/SymbolTable";
+import { GlobalSymbolTable } from "./SymbolTable";
 import { SymbolTableBuiltinBuilder } from "./Visitors/SymbolTableVisitor/SymbolTableBuiltInBuilder";
 import { SymbolTableVisitor } from "./Visitors/SymbolTableVisitor/SymbolTableVisitor";
 import { JackSemanticVisitor } from "./Visitors/SemanticVisitor/SemanticVisitor";

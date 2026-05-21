@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { type LogMessage, type CompilerError } from "../types/Compiler";
 import { type VirtualFile } from "../types/Vfs";
 import { JackCompiler } from "../compiler/JackCompiler/JackCompiler";
-import type { GlobalSymbolTable } from "../compiler/JackCompiler/Visitors/SymbolTableVisitor/SymbolTable";
+import type { GlobalSymbolTable } from "../compiler/JackCompiler/SymbolTable";
 
 export function useJackCompiler(files: VirtualFile[]) {
   const [compilerErrors, setCompilerErrors] = useState<CompilerError[]>([]);

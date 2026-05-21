@@ -1,7 +1,7 @@
-import { SymbolKind, type ClassVarKind, type SubroutineVarKind, type SymbolEntry } from './types'
-import { JackSpec } from '../../../../languages/jack/JackSpec';
-import { BaseSymbolTable } from '../../../SymbolTable/SymbolTableBase';
-import type { SymbolScope, SymbolMetadata } from '../../../SymbolTable/types';
+import { SymbolKind, type ClassVarKind, type SubroutineVarKind, type SymbolEntry } from './Visitors/SymbolTableVisitor/types'
+import { JackSpec } from '../../languages/jack/JackSpec';
+import { BaseSymbolTable } from '../SymbolTable/SymbolTableBase';
+import type { SymbolScope, SymbolMetadata } from '../SymbolTable/types';
 
 export class GlobalSymbolTable extends BaseSymbolTable {
   private classes = new Map<string, ClassLevelTable>();

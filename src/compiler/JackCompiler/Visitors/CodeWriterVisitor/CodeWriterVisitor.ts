@@ -17,7 +17,7 @@ import type {
   JackSubroutineCallNode,
 } from '../../AST';
 import { JackSpec } from '../../../../languages/jack/JackSpec';
-import { GlobalSymbolTable } from '../SymbolTableVisitor/SymbolTable';
+import { GlobalSymbolTable } from '../../SymbolTable';
 import type { SymbolEntry } from '../SymbolTableVisitor/types';
 
 export class CodeWriterVisitor extends JackVisitorAll<void> {

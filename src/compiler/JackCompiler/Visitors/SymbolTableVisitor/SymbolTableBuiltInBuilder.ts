@@ -1,4 +1,4 @@
-import { GlobalSymbolTable } from './SymbolTable';
+import { GlobalSymbolTable } from '../../SymbolTable';
 
 export class SymbolTableBuiltinBuilder {
   public static populate(table: GlobalSymbolTable): void {

@@ -13,7 +13,7 @@ import type {
   JackSubroutineNode,
 } from '../../AST';
 import { JackVisitorAll } from '../JackVisitorBase';
-import { GlobalSymbolTable } from '../SymbolTableVisitor/SymbolTable';
+import { GlobalSymbolTable } from '../../SymbolTable';
 import { JackCompilerError } from '../../../Errors';
 
 export class JackSemanticVisitor extends JackVisitorAll<void> {

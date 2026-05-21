@@ -6,7 +6,7 @@ import type {
 } from '../../AST';
 import { JackSpec } from '../../../../languages/jack/JackSpec';
 import { JackVisitorTopLevel } from '../JackVisitorBase';
-import { ClassLevelTable, GlobalSymbolTable } from './SymbolTable';
+import { ClassLevelTable, GlobalSymbolTable } from '../../SymbolTable';
 import { SymbolKind } from './types';
 
 export class SymbolTableVisitor extends JackVisitorTopLevel<GlobalSymbolTable> {
