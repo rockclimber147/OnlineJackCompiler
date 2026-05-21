@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { type LogMessage, type CompilerError } from "../types/compiler";
-import { type VirtualFile } from "../types/vfs";
+import { type VirtualFile } from "../types/Vfs";
 import { VMTranslator } from "../compiler/VMTranslator/VMTranslator";
 import type { VMSymbol } from "../compiler/VMTranslator/SymbolTable";
 

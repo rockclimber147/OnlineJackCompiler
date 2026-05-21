@@ -1,6 +1,6 @@
 import { JackTokenizer } from "./Tokenizer";
 import { JackParser } from "./Parser";
-import { type VirtualFile } from "../../types/vfs";
+import { type VirtualFile } from "../../types/Vfs";
 import { type CompilerError } from "../../types/compiler"; 
 import { type JackClassNode } from "./AST";
 import { JackCompilerError } from "../Errors";
