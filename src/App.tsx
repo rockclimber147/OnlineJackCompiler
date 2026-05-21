@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Cpu, Binary, Wrench, FileCode2, Braces } from "lucide-react";
+import { Binary, Wrench, FileCode2, Braces } from "lucide-react";
 import { type TabType } from "./types/compiler";
 import { AssemblerPage } from "./pages/AssemblerPage";
 import { VMTranslatorPage } from "./pages/VMTranslatorPage";
@@ -61,7 +61,7 @@ export default function App() {
               <Braces size={16} /> Jack Compiler
             </button>
 
-            <button
+            {/* <button
               onClick={() => setActiveTab("cpuemulator")}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === "cpuemulator"
@@ -70,7 +70,7 @@ export default function App() {
               }`}
             >
               <Cpu size={16} /> CPU Emulator
-            </button>
+            </button> */}
           </nav>
         </div>
       </header>
@@ -88,10 +88,6 @@ export default function App() {
 
         <div className={`h-full w-full ${activeTab === "jackcompiler" ? "block" : "hidden"}`}>
           <JackCompilerPage />
-        </div>
-        
-        <div className={`h-full w-full ${activeTab === "cpuemulator" ? "flex" : "hidden"} bg-slate-900 items-center justify-center font-mono text-slate-400 italic text-sm`}>
-          CPU Emulator engine workspace placeholder. Ready when you are!
         </div>
 
       </div>
