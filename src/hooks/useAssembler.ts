@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
-import { type CompilerError, type LogMessage } from "../types/Compiler";
+import { type CompilerError, type LogMessage } from "../types/compiler";
 
 export function useAssembler(activeContent?: string) {
   const [binaryCode, setBinaryCode] = useState<string>("// Binary machine code output will appear here");

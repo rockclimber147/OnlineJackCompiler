@@ -1,7 +1,7 @@
 import { SymbolTable } from "./SymbolTable";
 import { Parser, InstructionType } from "./Parser";
 import { COMP_MAP, DEST_MAP, JUMP_MAP } from "../../languages/asm/AsmSpec";
-import { type AssemblyResult, type CompilerError, type ParsedLine } from "../../types/Compiler"; 
+import { type AssemblyResult, type CompilerError, type ParsedLine } from "../../types/compiler"; 
 
 export class Assembler {
   public symbolTable: SymbolTable;

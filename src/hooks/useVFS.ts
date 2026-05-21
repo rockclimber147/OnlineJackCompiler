@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type VirtualFile } from "../types/Vfs";
+import { type VirtualFile } from "../types/vfs";
 
 interface UseVFSProps {
   initialFiles?: VirtualFile[];

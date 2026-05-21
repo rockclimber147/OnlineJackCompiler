@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { VirtualFile } from "../types/Vfs";
+import type { VirtualFile } from "../types/vfs";
 
 export const copyToClipboard = async (text: string): Promise<boolean> => {
   try {

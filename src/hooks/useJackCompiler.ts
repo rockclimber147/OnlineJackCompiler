@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { type LogMessage, type CompilerError } from "../types/Compiler";
-import { type VirtualFile } from "../types/Vfs";
+import { type LogMessage, type CompilerError } from "../types/compiler";
+import { type VirtualFile } from "../types/vfs";
 import { JackCompiler } from "../compiler/JackCompiler/JackCompiler";
 import type { GlobalSymbolTable } from "../compiler/JackCompiler/SymbolTable";
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Cpu, Binary, Wrench, FileCode2, Braces } from "lucide-react";
-import { type TabType } from "./types/Compiler";
+import { type TabType } from "./types/compiler";
 import { AssemblerPage } from "./pages/AssemblerPage";
 import { VMTranslatorPage } from "./pages/VMTranslatorPage";
 import { JackCompilerPage } from "./pages/JackCompilerPage";

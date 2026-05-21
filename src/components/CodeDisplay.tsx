@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import Editor, { type Monaco, type BeforeMount } from "@monaco-editor/react";
 import { registerCustomLanguages } from "../languages"; 
-import { type CompilerError } from "../types/Compiler"; // <-- Import the new type
+import { type CompilerError } from "../types/compiler"; // <-- Import the new type
 
 interface CodeDisplayProps {
   title: string;

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { Terminal as TerminalIcon } from "lucide-react";
-import { type LogMessage } from "../types/Compiler";
+import { type LogMessage } from "../types/compiler";
 
 interface ConsoleProps {
   logs: LogMessage[];

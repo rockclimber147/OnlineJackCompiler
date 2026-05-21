@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { JackCompiler } from './JackCompiler';
-import { type VirtualFile } from '../../types/Vfs';
+import { type VirtualFile } from '../../types/vfs';
 
 describe('JackCompiler Orchestrator', () => {
   // Helper to quickly create VirtualFiles for testing

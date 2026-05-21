@@ -1,8 +1,8 @@
 import { Parser } from "./Parser";
 import { CodeWriter } from "./CodeWriter";
 import { VMCommandType } from "../../languages/vm/VmSpec";
-import { type VirtualFile } from "../../types/Vfs";
-import { type CompilerError } from "../../types/Compiler"; 
+import { type VirtualFile } from "../../types/vfs";
+import { type CompilerError } from "../../types/compiler"; 
 import { VMSymbolTable, type VMSymbol } from "./SymbolTable";
 
 export interface VMTranslationResult {

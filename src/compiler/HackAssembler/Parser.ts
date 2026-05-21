@@ -1,4 +1,4 @@
-import type { ParsedLine } from "../../types/Compiler";
+import type { ParsedLine } from "../../types/compiler";
 
 export const InstructionType = {
   A_INSTRUCTION: 0, // @xxx
