@@ -1,73 +1,74 @@
-# React + TypeScript + Vite
+# Jack Compiler & Hack IDE
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A complete, browser-based integrated development environment and compiler toolchain for the Jack programming language and Hack architecture (Nand2Tetris). 
 
-Currently, two official plugins are available:
+This project implements a full compilation pipeline—from high-level object-oriented code down to raw machine binary—entirely in the browser. It is designed to explore compiler design, low-level systems, and "under-the-hood" software engineering.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+* **Full-Stack Compilation Pipeline:**
+  * **Jack Compiler:** Compiles ```.jack``` source code into intermediate ```.vm``` bytecode.
+  * **VM Translator:** Translates ```.vm``` stack-machine code into Hack Assembly (```.asm```).
+  * **Assembler:** Assembles ```.asm``` files into executable Hack Binary (```.hack```).
+* **Advanced Semantic Analysis:**
+  * Strict duplicate identifier prevention and scope shadowing checks.
+  * Robust control flow analysis (guaranteed return path validation).
+  * Strict return-type checking for both ```void``` and typed subroutines.
+* **Rich Browser IDE:**
+  * **Virtual File System (VFS):** State-managed workspace with robust duplicate file prevention, file importing, and workspace exporting.
+  * **Monaco Editor Integration:** Real-time syntax highlighting and precise inline error squigglies mapped directly to AST tokens.
+  * **Resizable Interface:** Drag-and-drop panel architecture for side-by-side code authoring, symbol table inspection, and VM output viewing.
+* **Jack OS Integration:** 1-click loading of standard library OS classes (```Math```, ```Memory```, ```Screen```, etc.).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+* **Frontend Framework:** React, TypeScript, Vite
+* **Editor Component:** Monaco Editor (```@monaco-editor/react```)
+* **UI Utilities:** ```lucide-react```, ```react-resizable-panels```
+* **Testing:** Vitest
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Compiler Architecture
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The compiler features a classic multi-pass architecture, ensuring clean separation of concerns:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. **Phase 1: Lexical & Syntax Analysis**
+   * **Tokenizer:** Strips whitespace/comments and breaks source into a stream of Jack tokens.
+   * **Parser (Recursive Descent):** Constructs a strongly-typed Abstract Syntax Tree (AST).
+2. **Phase 2: Symbol Resolution**
+   * **Symbol Table Visitor:** Walks the AST to build class-level and subroutine-level symbol tables, mapping variable scopes and assigning memory segments.
+3. **Phase 3: Semantic Analysis**
+   * **Semantic Visitor:** Validates expression types, subroutine calls, control-flow paths, and variable initialization, throwing targeted ```JackCompilerError```s for the IDE.
+4. **Phase 4: Code Generation**
+   * **Code Writer Visitor:** Traverses the validated AST to emit stack-based Hack VM bytecode.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Getting Started
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+To run the IDE locally:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/rockclimber147/OnlineJackCompiler.git
+   cd OnlineJackCompiler
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Run the test suite**
+   ```bash
+   npm run test
+   ```
+
+## Author
+
+**Daylen Smith**
+*Software Developer*
+
+Built with a passion for learning how complex systems work from the ground up.
