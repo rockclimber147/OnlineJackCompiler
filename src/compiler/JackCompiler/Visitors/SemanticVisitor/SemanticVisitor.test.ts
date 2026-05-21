@@ -189,9 +189,20 @@ describe('SemanticVisitor', () => {
         }
       }
     `;
-    // We only pass one source, so 'UnknownClass' won't be in the global symbol table
     const errors = validateSource([source]);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => e.message.includes("Class 'UnknownClass' is not defined"))).toBe(true);
   });
+
+  test('args are correctly identiffied', () => {
+    const source = `
+    class Main {
+        function int double(int a) {
+            return a * 2;
+        }
+    }
+    `
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  })
 });
