@@ -71,14 +71,13 @@ export class JackCompiler {
         const tokenizer = new JackTokenizer(file.content);
         const tokens = tokenizer.tokenize();
         const parser = new JackParser(tokens);
-        asts[file.name] = parser.parse();
+        asts[file.name] = parser.parse(file.name.split(".")[0]);
       } catch (err: any) {
         asts[file.name] = null;
 
         if (err instanceof JackCompilerError) {
           errors.push(this.formatError(file.name, err));
         } else {
-          // Lexical errors from the Tokenizer
           const lexicalMatch = err.message.match(/line (\d+), col (\d+)/);
           const line = lexicalMatch ? parseInt(lexicalMatch[1], 10) : 1;
           const col = lexicalMatch ? parseInt(lexicalMatch[2], 10) : 1;

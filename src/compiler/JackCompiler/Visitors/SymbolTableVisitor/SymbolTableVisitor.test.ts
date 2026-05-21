@@ -6,21 +6,21 @@ import { SymbolKind } from './types';
 import { GlobalSymbolTable } from '../../SymbolTable';
 
 describe('SymbolTableVisitor', () => {
-  const getTableFromSource = (source: string) => {
+  const getTableFromSource = (source: string, fileName: string) => {
     const tokenizer = new JackTokenizer(source);
     const tokens = tokenizer.tokenize();
     const parser = new JackParser(tokens);
-    const ast = parser.parse();
+    const ast = parser.parse(fileName);
     const table = new GlobalSymbolTable();
     const visitor = new SymbolTableVisitor(table);
     return visitor.visit(ast);
   };
 
-  const getAstFromSource = (source: string) => {
+  const getAstFromSource = (source: string, fileName: string) => {
     const tokenizer = new JackTokenizer(source);
     const tokens = tokenizer.tokenize();
     const parser = new JackParser(tokens);
-    return parser.parse();
+    return parser.parse(fileName);
   };
 
   test('should populate class-level fields and statics', () => {
@@ -32,7 +32,7 @@ describe('SymbolTableVisitor', () => {
         function void main() {}
       }
     `;
-    const globalTable = getTableFromSource(source);
+    const globalTable = getTableFromSource(source, 'Square');
     // Note: You'll need to expose a getClass method or make classes public in GlobalSymbolTable
     const squareTable = (globalTable as any).classes.get('Square');
 
@@ -60,7 +60,7 @@ describe('SymbolTableVisitor', () => {
         function void reset() {}
       }
     `;
-    const globalTable = getTableFromSource(source);
+    const globalTable = getTableFromSource(source, 'Square');
     const squareTable = (globalTable as any).classes.get('Square');
 
     const drawTable = squareTable.lookupSubroutine('draw');
@@ -87,7 +87,7 @@ describe('SymbolTableVisitor', () => {
         }
       }
     `;
-    const globalTable = getTableFromSource(source);
+    const globalTable = getTableFromSource(source, 'Math');
     const mathTable = (globalTable as any).classes.get('Math');
     const addTable = mathTable.lookupSubroutine('add');
 
@@ -103,7 +103,7 @@ describe('SymbolTableVisitor', () => {
         method void second(int b) { var int x, y; }
       }
     `;
-    const globalTable = getTableFromSource(source);
+    const globalTable = getTableFromSource(source, 'Test');
     const testTable = (globalTable as any).classes.get('Test');
 
     const first = testTable.lookupSubroutine('first');
@@ -124,7 +124,7 @@ describe('SymbolTableVisitor', () => {
         static int x;
       }
     `;
-    expect(() => getTableFromSource(source)).toThrow(/already defined in class scope/);
+    expect(() => getTableFromSource(source, 'Bad')).toThrow(/already defined in class scope/);
   });
 
   test('should be ok with multiple valid asts', () => {
@@ -135,7 +135,7 @@ describe('SymbolTableVisitor', () => {
         function void main() {}
       }
     `;
-    const ast1 = getAstFromSource(source1);
+    const ast1 = getAstFromSource(source1, "Square");
 
     const source2 = `
       class Rectangle {
@@ -144,7 +144,7 @@ describe('SymbolTableVisitor', () => {
         function void init() {}
       }
     `;
-    const ast2 = getAstFromSource(source2);
+    const ast2 = getAstFromSource(source2, 'Rectangle');
     const table = new GlobalSymbolTable();
     const visitor = new SymbolTableVisitor(table);
 

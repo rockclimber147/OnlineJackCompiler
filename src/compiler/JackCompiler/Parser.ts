@@ -30,7 +30,7 @@ export abstract class BaseParser<T_AST> {
     this.validator = new TokenValidator(tokens);
   }
 
-  abstract parse(): T_AST;
+  abstract parse(fileName: string): T_AST;
 
   protected check(type: TokenType, lexeme?: string): boolean {
     const token = this.validator.peek(0);
@@ -56,13 +56,14 @@ export abstract class BaseParser<T_AST> {
 
 
 export class JackParser extends BaseParser<JackClassNode> {
-  public parse(): JackClassNode {
-    return this.parseClass();
+  public parse(fileName: string): JackClassNode {
+    return this.parseClass(fileName);
   }
 
-  private parseClass(): JackClassNode {
+  private parseClass(fileName: string): JackClassNode {
     const startToken = this.validator.expectLexeme(JackSpec.CLASS);
-    const className = this.validator.expectType(TokenType.IDENTIFIER).lexeme;
+    const classToken = this.validator.expectLexeme(fileName)
+    const className = classToken.lexeme;
 
     this.validator.expectLexeme(JackSpec.L_BRACE);
 

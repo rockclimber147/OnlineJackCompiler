@@ -21,7 +21,7 @@ describe('JackParser Expressions and Terms', () => {
     const tokenizer = new JackTokenizer(source);
     const tokens = tokenizer.tokenize();
     const parser = new JackParser(tokens);
-    const ast = parser.parse();
+    const ast = parser.parse("Test");
 
     const stmt = ast.subroutines[0].body.statements[0];
     return (stmt as JackLetStatementNode).valueExpression;

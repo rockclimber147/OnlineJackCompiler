@@ -8,11 +8,11 @@ import { CodeWriterVisitor } from './CodeWriterVisitor';
 
 describe('CodeWriterVisitor', () => {
   // Helper to compile a single Jack snippet down to a VM string
-  const compileSource = (source: string): string => {
+  const compileSource = (source: string, fileName: string): string => {
     const tokenizer = new JackTokenizer(source);
     const tokens = tokenizer.tokenize();
     const parser = new JackParser(tokens);
-    const ast = parser.parse();
+    const ast = parser.parse(fileName);
 
     const globalTable = new GlobalSymbolTable();
     // Populate OS built-ins (Memory, Math, etc.) so the compiler knows they exist
@@ -35,7 +35,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, "Main");
     
     expect(vm).toContain('function Main.main 0');
     expect(vm).toContain('push constant 0'); // Void functions push 0
@@ -51,7 +51,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, 'Point');
     const lines = vm.split('\n');
 
     expect(lines).toContain('function Point.new 0');
@@ -72,7 +72,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, 'Point');
     const lines = vm.split('\n');
 
     expect(lines).toContain('function Point.setX 0'); // 0 local vars
@@ -94,7 +94,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, 'MathTest');
     const lines = vm.split('\n');
 
     expect(lines).toContain('function MathTest.calc 1'); // 1 local var
@@ -113,7 +113,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, 'Main');
     const lines = vm.split('\n');
 
     expect(lines).toContain('push constant 2'); // Length of "Hi"
@@ -140,7 +140,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, "Loop");
     
     // We expect certain labels, but we use regex or partial matches 
     // because the label counters (WHILE_EXP_0) might change.
@@ -164,7 +164,7 @@ describe('CodeWriterVisitor', () => {
         }
       }
     `;
-    const vm = compileSource(source);
+    const vm = compileSource(source, 'Logic');
     
     expect(vm).toMatch(/if-goto IF_TRUE_\d+/);
     expect(vm).toMatch(/goto IF_FALSE_\d+/);

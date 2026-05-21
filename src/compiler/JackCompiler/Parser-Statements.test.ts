@@ -9,11 +9,11 @@ import type {
   JackIfStatementNode,
 } from './AST';
 
-const parseToClassAST = (source: string): JackClassNode => {
+const parseToClassAST = (source: string, fileName: string): JackClassNode => {
   const tokenizer = new JackTokenizer(source);
   const tokens = tokenizer.tokenize();
   const parser = new JackParser(tokens);
-  return parser.parse();
+  return parser.parse(fileName);
 };
 
 describe('JackParser Statements', () => {
@@ -26,7 +26,7 @@ describe('JackParser Statements', () => {
             }
         }`;
 
-    const ast = parseToClassAST(source);
+    const ast = parseToClassAST(source, 'Test');
     expect(ast.subroutines).toHaveLength(1);
     const statements = ast.subroutines[0].body.statements;
 
@@ -44,7 +44,7 @@ describe('JackParser Statements', () => {
             }
         }`;
 
-    const ast = parseToClassAST(source);
+    const ast = parseToClassAST(source, 'Test');
     const statements = ast.subroutines[0].body.statements;
 
     expect(statements).toHaveLength(2);
@@ -71,7 +71,7 @@ describe('JackParser Statements', () => {
             }
         }`;
 
-    const ast = parseToClassAST(source);
+    const ast = parseToClassAST(source, 'Test');
     const statements = ast.subroutines[0].body.statements;
 
     expect(statements).toHaveLength(1);
@@ -95,7 +95,7 @@ describe('JackParser Statements', () => {
             }
         }`;
 
-    const ast = parseToClassAST(source);
+    const ast = parseToClassAST(source, 'Test');
     const statements = ast.subroutines[0].body.statements;
 
     expect(statements).toHaveLength(1);
@@ -125,7 +125,7 @@ describe('JackParser Statements', () => {
             }
         }`;
 
-    const ast = parseToClassAST(source);
+    const ast = parseToClassAST(source, 'Test');
     const statements = ast.subroutines[0].body.statements;
 
     // Outer While

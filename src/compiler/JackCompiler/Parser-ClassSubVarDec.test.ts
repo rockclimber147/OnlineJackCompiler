@@ -4,16 +4,16 @@ import { JackParser } from './Parser'
 import { ASTNodeKind } from '../AST/AST';
 
 describe('JackParser', () => {
-  const parseSource = (source: string) => {
+  const parseSource = (source: string, fileName: string) => {
     const tokenizer = new JackTokenizer(source);
     const tokens = tokenizer.tokenize();
     const parser = new JackParser(tokens);
-    return parser.parse();
+    return parser.parse(fileName);
   };
 
   test('should parse an empty class', () => {
     const source = 'class Main { }';
-    const ast = parseSource(source);
+    const ast = parseSource(source, 'Main');
 
     expect(ast.kind).toBe(ASTNodeKind.CLASS);
     expect(ast.name).toBe('Main');
@@ -32,7 +32,7 @@ describe('JackParser', () => {
                 static boolean isLarge;
             }
         `;
-    const ast = parseSource(source);
+    const ast = parseSource(source, 'Square');
 
     expect(ast.classVarDecs).toHaveLength(2);
 
@@ -51,7 +51,7 @@ describe('JackParser', () => {
                 }
             }
         `;
-    const ast = parseSource(source);
+    const ast = parseSource(source, "Main");
 
     expect(ast.subroutines).toHaveLength(1);
     const main = ast.subroutines[0];
@@ -74,6 +74,6 @@ describe('JackParser', () => {
     const source = 'class Err { field int x }'; // Missing ;
 
     // We expect the parser to throw because it uses validator.expectLexeme
-    expect(() => parseSource(source)).toThrow(/;/);
+    expect(() => parseSource(source, "Err")).toThrow(/;/);
   });
 });

@@ -9,22 +9,34 @@ import { GlobalSymbolTable } from '../../SymbolTable';
 describe('SemanticVisitor', () => {
   const validateSource = (sources: string[]) => {
     const asts: ASTNode[] = [];
+    
     sources.forEach((source) => {
       const tokenizer = new JackTokenizer(source);
       const tokens = tokenizer.tokenize();
       const parser = new JackParser(tokens);
-      asts.push(parser.parse());
+      
+      // Automatically derive the filename from the class name in the source code
+      const match = source.match(/class\s+([A-Za-z0-9_]+)/);
+      const fileName = match ? `${match[1]}` : 'Unknown';
+      
+      // Pass the derived filename to the parser
+      asts.push(parser.parse(fileName)); 
     });
+
     const table = new GlobalSymbolTable();
     const stVisitor = new SymbolTableVisitor(table);
     let globalTable = new GlobalSymbolTable();
-    asts.forEach((ast) => (globalTable = stVisitor.visit(ast)));
+    
+    asts.forEach((ast) => {
+      globalTable = stVisitor.visit(ast);
+    });
 
     const semanticVisitor = new JackSemanticVisitor(globalTable);
     asts.forEach((ast) => semanticVisitor.visit(ast));
 
     return semanticVisitor.getErrors();
   };
+
   test('should report error for undefined variables', () => {
     const source = `
       class Main {
