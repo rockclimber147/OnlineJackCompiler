@@ -1,5 +1,7 @@
 # Jack Compiler & Hack IDE
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://rockclimber147.github.io/OnlineJackCompiler/)
+
 A complete, browser-based integrated development environment and compiler toolchain for the Jack programming language and Hack architecture (Nand2Tetris). 
 
 This project implements a full compilation pipeline—from high-level object-oriented code down to raw machine binary—entirely in the browser. It is designed to explore compiler design, low-level systems, and "under-the-hood" software engineering.
