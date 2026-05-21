@@ -1,17 +1,19 @@
-import type {
-  JackLetStatementNode,
-  JackIfStatementNode,
-  JackWhileStatementNode,
-  JackDoStatementNode,
-  JackReturnStatementNode,
-  JackBinaryExpressionNode,
-  JackVariableTermNode,
-  JackUnaryTermNode,
-  JackParenthesizedExpressionNode,
-  JackSubroutineCallNode,
-  JackClassNode,
-  JackSubroutineNode,
-  JackStatementNode,
+import {
+  type JackLetStatementNode,
+  type JackIfStatementNode,
+  type JackWhileStatementNode,
+  type JackDoStatementNode,
+  type JackReturnStatementNode,
+  type JackBinaryExpressionNode,
+  type JackVariableTermNode,
+  type JackUnaryTermNode,
+  type JackParenthesizedExpressionNode,
+  type JackSubroutineCallNode,
+  type JackClassNode,
+  type JackSubroutineNode,
+  type JackStatementNode,
+  type JackExpressionNode,
+  ExpressionNodeTypes,
 } from '../../AST';
 import { JackVisitorAll } from '../JackVisitorBase';
 import { GlobalSymbolTable } from '../../SymbolTable';
@@ -23,6 +25,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
   private newErrors: JackCompilerError[] = [];
   private currentClassName: string = '';
   private currentSubroutineName: string = '';
+  private currentSubroutineReturnType: string = '';
   private table: GlobalSymbolTable;
 
   constructor(table: GlobalSymbolTable) {
@@ -49,12 +52,14 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
 
   protected override visitSubroutine(node: JackSubroutineNode): void {
     this.currentSubroutineName = node.name;
+    this.currentSubroutineReturnType = typeof node.returnType === 'string' 
+    ? node.returnType 
+    : (node.returnType as any).lexeme;
 
     this.visitMany(node.body.varDecs);
     this.visitMany(node.body.statements);
 
     const guaranteesReturn = this.doesBlockReturn(node.body.statements);
-
     if (!guaranteesReturn) {
       this.newErrors.push(new JackCompilerError(
         node.nameToken || node.startToken,
@@ -63,6 +68,7 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
     }
 
     this.currentSubroutineName = '';
+    this.currentSubroutineReturnType = '';
   }
 
   protected visitLetStatement(node: JackLetStatementNode): void {
@@ -94,8 +100,42 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
     this.visit(node.subroutineCall);
   }
 
-  protected visitReturnStatement(node: JackReturnStatementNode): void {
+  protected override visitReturnStatement(node: JackReturnStatementNode): void {
     if (node.expression) this.visit(node.expression);
+
+    const isVoid = this.currentSubroutineReturnType === JackSpec.VOID;
+
+    // 1. Void returning a value
+    if (isVoid && node.expression) {
+      this.newErrors.push(new JackCompilerError(
+        node.startToken,
+        `Semantic Error: Subroutine '${this.currentSubroutineName}' is void and cannot return a value.`
+      ));
+      return;
+    }
+
+    // 2. Non-void NOT returning a value
+    if (!isVoid && !node.expression) {
+      this.newErrors.push(new JackCompilerError(
+        node.startToken,
+        `Semantic Error: Subroutine '${this.currentSubroutineName}' must return a value of type '${this.currentSubroutineReturnType}'.`
+      ));
+      return;
+    }
+
+    // 3. Type Validation (if we are returning a value)
+    if (!isVoid && node.expression) {
+      const exprType = this.getExpressionType(node.expression);
+      
+      // Only throw an error if we successfully inferred the type AND it's a mismatch.
+      // If exprType is null, it means it's a complex expression we can't safely infer yet.
+      if (exprType && !this.isTypeCompatible(exprType, this.currentSubroutineReturnType)) {
+        this.newErrors.push(new JackCompilerError(
+          node.startToken,
+          `Semantic Error: Cannot return type '${exprType}' from a subroutine returning '${this.currentSubroutineReturnType}'.`
+        ));
+      }
+    }
   }
 
   protected visitBinaryExpression(node: JackBinaryExpressionNode): void {
@@ -110,7 +150,6 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
       this.currentSubroutineName,
     );
     if (error) {
-      // IDE target: The exact variable being used
       this.newErrors.push(new JackCompilerError(node.nameToken, error));
     }
     if (node.arrayIndex) {
@@ -176,5 +215,39 @@ export class JackSemanticVisitor extends JackVisitorAll<void> {
     }
 
     return false;
+  }
+
+  private isTypeCompatible(actual: string, expected: string): boolean {
+    if (actual === expected) return true;
+    
+    // In Jack, 'null' is a valid return value for ANY object/class, but NOT primitives
+    if (actual === JackSpec.NULL && !['int', 'boolean', 'char'].includes(expected)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private getExpressionType(node: JackExpressionNode): string | null {
+    if (!node) return null;
+
+    // Use ExpressionNodeTypes to allow TypeScript to narrow the union type
+    if (node.type === ExpressionNodeTypes.VAR_NAME) {
+      const varName = node.name;
+      const symbol = (this.table as any).findVar(varName, this.currentClassName, this.currentSubroutineName);
+      return symbol ? symbol.type : null;
+    }
+
+    // Literals have obvious types
+    if (node.type === ExpressionNodeTypes.INTEGER) return 'int';
+    if (node.type === ExpressionNodeTypes.STRING) return 'String';
+    
+    if (node.type === ExpressionNodeTypes.KEYWORD) {
+      if (node.keyword === JackSpec.TRUE || node.keyword === JackSpec.FALSE) return 'boolean';
+      if (node.keyword === JackSpec.NULL) return 'null';
+      if (node.keyword === JackSpec.THIS) return this.currentClassName;
+    }
+    
+    return null; 
   }
 }

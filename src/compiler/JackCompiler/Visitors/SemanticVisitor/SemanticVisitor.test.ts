@@ -374,4 +374,42 @@ test('should pass when a straight-line subroutine has a return statement', () =>
     const errors = validateSource([source]);
     expect(errors.length).toBe(0);
   });
+
+  test('should report error when a void subroutine tries to return a value', () => {
+    const source = `
+      class Main {
+        function void doSomething() {
+          return 5; // Error: void cannot return value
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes('is void and cannot return a value'))).toBe(true);
+  });
+
+  test('should report error when a non-void subroutine returns without a value', () => {
+    const source = `
+      class Main {
+        function int getNum() {
+          return; // Error: missing int
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => e.message.includes("must return a value of type 'int'"))).toBe(true);
+  });
+
+  test('should allow returning "this" when the return type matches the class', () => {
+    const source = `
+      class Point {
+        constructor Point new() {
+          return this; // OK: 'this' evaluates to 'Point'
+        }
+      }
+    `;
+    const errors = validateSource([source]);
+    expect(errors.length).toBe(0);
+  });
 });
