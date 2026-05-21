@@ -28,7 +28,6 @@ export function VMTranslatorPage() {
     asmCode, logs, compilerErrors, symbols, addLog, runTranslate, 
   } = useVMTranslator(files);
 
-  // NEW: State for Right Panel tabs
   const [rightTab, setRightTab] = useState<"output" | "symbols">("output");
 
   const activeFileErrors = compilerErrors.filter(err => 
@@ -50,6 +49,26 @@ export function VMTranslatorPage() {
     }
   };
 
+  const handleAddFile = (name: string) => {
+    const success = addFile(name, ".vm", "hackvm");
+    if (success) {
+      addLog(`Created ${name.endsWith('.vm') ? name : name + '.vm'}`, "success");
+    } else {
+      addLog(`Cannot create '${name}': A file with that name already exists.`, "error");
+      alert(`A file named '${name}' already exists in the workspace!`);
+    }
+  };
+
+  const handleRenameFile = (id: string, newName: string) => {
+    const success = renameFile(id, newName);
+    if (success) {
+      addLog(`Renamed file to ${newName}`, "success");
+    } else {
+      addLog(`Cannot rename to '${newName}': Name already in use.`, "error");
+      alert(`A file named '${newName}' already exists!`);
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -63,9 +82,9 @@ export function VMTranslatorPage() {
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
-                onAddFile={(name) => addFile(name, ".vm", "hackvm")}
+                onAddFile={handleAddFile} // <-- Updated
                 onUploadFiles={(fl) => uploadFiles(fl, ".vm", "hackvm", addLog)}
-                onRenameFile={(id, name) => renameFile(id, name)}
+                onRenameFile={handleRenameFile} // <-- Updated
                 onDeleteFile={deleteFile}
                 title="WORKSPACE"
                 acceptedExtensions=".vm"

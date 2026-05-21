@@ -2,7 +2,7 @@ export type TabType = "assembler" | "cpuemulator" | "vmtranslator" | "jackcompil
 
 export interface LogMessage {
   text: string;
-  type: "info" | "success" | "error";
+  type: "info" | "success" | "error" | "warning";
 }
 
 export interface AssemblyResult {

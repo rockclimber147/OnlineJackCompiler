@@ -30,7 +30,6 @@ export function JackCompilerPage() {
 
   const { logs, compilerErrors, symbolTable, compiledFiles, addLog, runCompile } = useJackCompiler(files);
 
-
   const activeFileErrors = compilerErrors.filter(err => 
     activeFile && err.message.startsWith(`[${activeFile.name}]`)
   );
@@ -71,6 +70,26 @@ export function JackCompilerPage() {
     }
   };
 
+  const handleAddFile = (name: string) => {
+    const success = addFile(name, ".jack", "jack");
+    if (success) {
+      addLog(`Created ${name.endsWith('.jack') ? name : name + '.jack'}`, "success");
+    } else {
+      addLog(`Cannot create '${name}': A file with that name already exists.`, "error");
+      alert(`A file named '${name}' already exists in the workspace!`);
+    }
+  };
+
+  const handleRenameFile = (id: string, newName: string) => {
+    const success = renameFile(id, newName);
+    if (success) {
+      addLog(`Renamed file to ${newName}`, "success");
+    } else {
+      addLog(`Cannot rename to '${newName}': Name already in use.`, "error");
+      alert(`A file named '${newName}' already exists!`);
+    }
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -83,9 +102,9 @@ export function JackCompilerPage() {
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
-                onAddFile={(name) => addFile(name, ".jack", "jack")}
+                onAddFile={handleAddFile} // <-- Updated
                 onUploadFiles={(fl) => uploadFiles(fl, ".jack", "jack", addLog)}
-                onRenameFile={(id, name) => renameFile(id, name)}
+                onRenameFile={handleRenameFile} // <-- Updated
                 onDeleteFile={deleteFile}
                 title="JACK FILES"
                 acceptedExtensions=".jack"
@@ -112,7 +131,7 @@ export function JackCompilerPage() {
                   value={activeFile.content}
                   language={activeFile.language}
                   onChange={updateActiveFile}
-                  errors={activeFileErrors} // <-- Hooked up local file errors here
+                  errors={activeFileErrors}
                   actions={
                     <>
                       <button onClick={() => handleCopyClick(activeFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
@@ -156,7 +175,7 @@ export function JackCompilerPage() {
                   >
                     <Database size={12} /> Load OS
                   </button>
-                  <button onClick={handleCompileClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-md text-[11px] font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer">
+                  <button onClick={handleCompileClick} disabled={files.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-3 py-1 rounded-md text-[11px] font-semibold transition tracking-wide active:scale-95 shadow-lg shadow-indigo-600/10 cursor-pointer ml-2">
                     <Play size={12} fill="currentColor" /> Compile Jack
                   </button>
                 </div>
@@ -228,7 +247,7 @@ export function JackCompilerPage() {
 
         <div className="h-1 bg-black/30 border-y border-slate-800/40 w-full shrink-0" />
         <div className="flex-1 min-h-[100px] w-full bg-[#1e1e1e]">
-          <Console logs={logs} /> {/* Hooked up clearLogs here */}
+          <Console logs={logs} />
         </div>
       </main>
     </div>

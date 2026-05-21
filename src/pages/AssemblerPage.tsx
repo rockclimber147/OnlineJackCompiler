@@ -37,6 +37,28 @@ export function AssemblerPage() {
     if (success) addLog("Copied to clipboard.", "success");
   };
 
+  // NEW: Handle Add File with Duplicate Protection
+  const handleAddFile = (name: string) => {
+    const success = addFile(name, ".asm", "hackasm");
+    if (success) {
+      addLog(`Created ${name.endsWith('.asm') ? name : name + '.asm'}`, "success");
+    } else {
+      addLog(`Cannot create '${name}': A file with that name already exists.`, "error");
+      alert(`A file named '${name}' already exists in the workspace!`);
+    }
+  };
+
+  // NEW: Handle Rename File with Duplicate Protection
+  const handleRenameFile = (id: string, newName: string) => {
+    const success = renameFile(id, newName);
+    if (success) {
+      addLog(`Renamed file to ${newName}`, "success");
+    } else {
+      addLog(`Cannot rename to '${newName}': Name already in use.`, "error");
+      alert(`A file named '${newName}' already exists!`);
+    }
+  };
+
   useEffect(() => {
     if (activeFileId) {
       setFileError(activeFileId, compilerErrors.length > 0);
@@ -55,9 +77,9 @@ export function AssemblerPage() {
                 files={files}
                 activeFileId={activeFileId}
                 onSelectFile={setActiveFileId}
-                onAddFile={(name) => addFile(name, ".asm", "hackasm")}
+                onAddFile={handleAddFile} // <-- Updated
                 onUploadFiles={(fl) => uploadFiles(fl, ".asm", "hackasm", addLog)} 
-                onRenameFile={renameFile} // <-- Wire it up
+                onRenameFile={handleRenameFile} // <-- Updated
                 onDeleteFile={deleteFile}
                 title="WORKSPACE"
                 acceptedExtensions=".asm,.txt"
@@ -127,7 +149,6 @@ export function AssemblerPage() {
                           <Copy size={13} /> Copy
                         </button>
                         
-                        {/* ADDED: Download button is now native to the CodeDisplay header */}
                         {binaryCode !== "// Compilation Failed" && !binaryCode.startsWith("//") && (
                           <button onClick={() => downloadFile(activeFile?.name.replace(".asm", ".hack") || "output.hack", binaryCode)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
                             <Download size={13} /> Save
