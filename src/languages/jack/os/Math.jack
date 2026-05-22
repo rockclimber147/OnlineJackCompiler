@@ -1,133 +1,170 @@
-class Math{
-	static Array EYE;
-	
-	function void init(){
-	    var int i;
-		let EYE = Array.new(16);
-		let EYE[0] = 1;
-		let i = 1;
-		while(i < 16){
-		    let EYE[i] = EYE[i-1] +  EYE[i-1];
-			let i = i + 1;
-		}
-		return;		
-	}
-	
-	function int abs(int x){
-		if(x < 0){
-			return -x;
-		} else {
-			return x;
-		}
-	}
-	
-	function int min(int x, int y){
-		if(x > y){
-			return y;
-		} else {
-			return x;
-		}
-	}
-	
-	function int max(int x, int y){
-		if(x < y){
-			return y;
-		} else {
-			return x;
-		}
-	}
-	
-	function int mod(int x, int y){
-		return x - ((x / y) * y);
-	}
-	
-	function int multiply(int x, int y){
-		var int i, ret;
-		let i = 0;
-		let ret = 0;
-		while(i < 16){
-		    if(Math.getBit(y, i) = 1){
-				let ret = ret + x;
-			}
-			let x = x + x;
-			let i = i + 1;
-		}
-		return ret;
-	}
-	
-	function int getTwoRaisedTo(int exp){
-		if(exp > 15){
-			return -1;
-		}
-		return EYE[exp];
-	}
-		
-	function int getBit(int x, int i){
-		return -~((x & EYE[i]) = 0);
-	}
-	
-	function int divide(int x, int y){
-		var int q, sign;
-		let sign = 1;
+/**
+ * A library of standard mathematical functions.
+ * Provides basic arithmetic operations including absolute value,
+ * min/max, multiplication, division, and square root calculations.
+ */
+class Math {
+    static Array EYE;
 
-		if(y = 0){
-			do Sys.error(3);
-		} 
-		if(x = 0){
-			return 0;
-		}
-		if(y < 0){
-			if(x > 0){
-				return -Math.divide(x, -y);
-			} else {
-				return Math.divide(-x, -y);
-			}
-		} else {
-			if(x < 0){
-				return -Math.divide(-x, y);
-			}
-		}
-		if(x < y){
-			return 0;
-		}
-		if((2 * y) < 0){
-			return 0;
-		}
-		let q = Math.divide(x, 2 * y);
-		if((x - (2 * q * y)) < y){
-			return 2 * q;
-		} else {
-			return (2 * q) + 1;
-		}
-	}
-	
-	function int sqrt(int x){
-		var int start, end, mid, value;
-		if(x < 0){
-			do Sys.error(4);
-		}
-		if(x = 0){
-			return 0;
-		}
-		let start = 0;
-		let end = x;
-		while(start < end){
-			if(start = (end - 1)){
-				return start;
-			}
-			let mid = start + ((end - start)/2);
-			let value = mid * mid;
-			
-			if(value = x){
-				return mid;
-			} else {
-				if((value > x) | value < 0){
-					let end = mid;
-				} else {
-					let start = mid;
-				}
-			}
-		}
-		return mid;
-	}
+    /** 
+     * Initializes the library by pre-calculating powers of 2.
+     */
+    function void init() {
+        var int i;
+        let EYE = Array.new(16);
+        let EYE[0] = 1;
+        let i = 1;
+        while(i < 16){
+            let EYE[i] = EYE[i-1] +  EYE[i-1];
+            let i = i + 1;
+        }
+        return;     
+    }
+
+    /** 
+     * Returns the absolute value of the given integer.
+     */
+    function int abs(int x){
+        if(x < 0){
+            return -x;
+        } else {
+            return x;
+        }
+    }
+
+    /** 
+     * Returns the minimum of two integers.
+     */
+    function int min(int x, int y){
+        if(x > y){
+            return y;
+        } else {
+            return x;
+        }
+    }
+
+    /** 
+     * Returns the maximum of two integers.
+     */
+    function int max(int x, int y){
+        if(x < y){
+            return y;
+        } else {
+            return x;
+        }
+    }
+
+    /** 
+     * Returns the remainder of x divided by y.
+     */
+    function int mod(int x, int y){
+        return x - ((x / y) * y);
+    }
+
+    /** 
+     * Returns the product of x and y using a shift-and-add algorithm.
+     */
+    function int multiply(int x, int y){
+        var int i, ret;
+        let i = 0;
+        let ret = 0;
+        while(i < 16){
+            if(Math.getBit(y, i) = 1){
+                let ret = ret + x;
+            }
+            let x = x + x;
+            let i = i + 1;
+        }
+        return ret;
+    }
+
+    /** 
+     * Returns 2 raised to the power of the given exponent (0-15).
+     */
+    function int getTwoRaisedTo(int exp){
+        if(exp > 15){
+            return -1;
+        }
+        return EYE[exp];
+    }
+
+    /** 
+     * Returns the value of the i-th bit of x (0 or 1).
+     */
+    function int getBit(int x, int i){
+        return -~((x & EYE[i]) = 0);
+    }
+
+    /** 
+     * Returns the integer quotient of x / y.
+     * Raises error 3 if y is 0.
+     */
+    function int divide(int x, int y){
+        var int q, sign;
+        let sign = 1;
+
+        if(y = 0){
+            do Sys.error(3);
+        } 
+        if(x = 0){
+            return 0;
+        }
+        if(y < 0){
+            if(x > 0){
+                return -Math.divide(x, -y);
+            } else {
+                return Math.divide(-x, -y);
+            }
+        } else {
+            if(x < 0){
+                return -Math.divide(-x, y);
+            }
+        }
+        if(x < y){
+            return 0;
+        }
+        if((2 * y) < 0){
+            return 0;
+        }
+        let q = Math.divide(x, 2 * y);
+        if((x - (2 * q * y)) < y){
+            return 2 * q;
+        } else {
+            return (2 * q) + 1;
+        }
+    }
+
+    /** 
+     * Returns the integer square root of x.
+     * Raises error 4 if x is negative.
+     */
+    function int sqrt(int x){
+        var int start, end, mid, value;
+        if(x < 0){
+            do Sys.error(4);
+        }
+        if(x = 0){
+            return 0;
+        }
+        let start = 0;
+        let end = x;
+        while(start < end){
+            if(start = (end - 1)){
+                return start;
+            }
+            let mid = start + ((end - start)/2);
+            let value = mid * mid;
+            
+            if(value = x){
+                return mid;
+            } else {
+                if((value > x) | value < 0){
+                    let end = mid;
+                } else {
+                    let start = mid;
+                }
+            }
+        }
+        return mid;
+    }
 }
