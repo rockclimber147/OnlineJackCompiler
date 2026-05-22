@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import Editor from "@monaco-editor/react";
+import { Virtuoso } from 'react-virtuoso';
 import * as monaco from "monaco-editor";
 import { useHackEmulator } from "../hooks/useHackEmulator";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
@@ -113,17 +114,24 @@ export function HackEmulatorPage() {
 
         <Separator className="w-1 bg-slate-800" />
 
-        <Panel defaultSize={30} className="p-4 overflow-y-auto">
-          <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">RAM (0-63)</h2>
-          <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-            {getRamRange(0, 64).map((value, i) => (
-              <div key={i} className="bg-slate-950 p-1 px-2 rounded border border-slate-800 flex justify-between">
-                <span className="text-slate-600">{i}:</span> 
-                <span className={value !== 0 ? "text-indigo-400" : "text-slate-200"}>
-                  {value}
-                </span>
-              </div>
-            ))}
+        <Panel defaultSize={30} className="flex flex-col p-4 bg-slate-900 border-l border-slate-800">
+          <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">Full RAM View</h2>
+          <div className="flex-1 overflow-hidden">
+            <Virtuoso
+              style={{ height: '100%' }}
+              totalCount={16384}
+              itemContent={(index) => {
+                const val = getRamRange(index, 1)[0];
+                return (
+                  <div className="flex items-center justify-between px-2 py-1 border-b border-slate-800/50 font-mono text-xs">
+                    <span className="text-slate-600 w-12 shrink-0">{index}:</span>
+                    <span className={val !== 0 ? "text-indigo-400 font-bold" : "text-slate-200"}>
+                      {val}
+                    </span>
+                  </div>
+                );
+              }}
+            />
           </div>
         </Panel>
       </Group>
