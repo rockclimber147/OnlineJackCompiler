@@ -7,6 +7,7 @@ import { DebuggerCodeDisplay } from "../components/Emulator/DebuggerCodeDisplay"
 import type { CompilerError } from "../types/compiler";
 import { RegisterPanel } from "../components/Emulator/RegisterPanel";
 import { RamViewer } from "../components/Emulator/RamViewer";
+import { EmulatorScreen } from "../components/Emulator/EmulatorScreen";
 
 export function HackEmulatorPage() {
   const { pc, registers, load, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed } = useHackEmulator();
@@ -118,8 +119,8 @@ return (
 
         {/* Center: Screen & Registers */}
         <Panel defaultSize={30} className="p-4 flex flex-col gap-4">
-          <div className="flex-1 bg-slate-950 rounded border border-slate-800 flex items-center justify-center text-slate-600 font-mono text-sm">
-            [ Screen Placeholder ]
+          <div className="flex-1 bg-slate-950 rounded border border-slate-800 flex items-center justify-center">
+            <EmulatorScreen getRamRange={getRamRange} />
           </div>
           <RegisterPanel pc={pc} registers={registers} />
         </Panel>

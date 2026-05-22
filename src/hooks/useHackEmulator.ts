@@ -1,12 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { HackEmulator } from '../compiler/Emulators/CpuEmulator/hackEmulator';
 
-// Configuration constants for emulator behavior
 const MIN_SPEED = 1;
 const MAX_SPEED = 100;
-const MIN_CYCLES_PER_FRAME = 1;
-const MAX_CYCLES_PER_FRAME = 1000;
-const SPEED_EXPONENT = Math.log10(MAX_CYCLES_PER_FRAME / MIN_CYCLES_PER_FRAME);
 
 export function useHackEmulator() {
   const cpu = useRef(new HackEmulator());
@@ -50,20 +46,25 @@ export function useHackEmulator() {
     if (!isRunning) return;
 
     let animationId: number;
-    let lastExecutionTime = performance.now();
+    let lastTimestamp = performance.now();
 
-    const runLoop = (currentTime: number) => {
-      const normalizedSpeed = (speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+    const runLoop = (now: number) => {
+      // 1. Calculate target instructions per second (IPS)
+      // Map speed 0 -> 1 IPS, speed 100 -> 1000 IPS
+      const targetIPS = Math.pow(10, (speed / 100) * 3); 
       
-      // Logarithmic delay: 1000ms at speed 0, ~0ms at speed 100
-      const delayPerCycle = 1000 * Math.pow(0.01, normalizedSpeed);
+      // 2. Calculate elapsed time in seconds
+      const elapsedSeconds = (now - lastTimestamp) / 1000;
       
-      const deltaTime = currentTime - lastExecutionTime;
+      // 3. Determine how many cycles to run this frame
+      // We want: targetIPS * elapsedSeconds
+      const instructionsToRun = Math.floor(targetIPS * elapsedSeconds);
 
-      if (deltaTime >= delayPerCycle) {
-        // Execute the step
-        step();
-        lastExecutionTime = currentTime;
+      if (instructionsToRun > 0) {
+        for (let i = 0; i < Math.min(instructionsToRun, 500); i++) {
+          step();
+        }
+        lastTimestamp = now;
       }
 
       animationId = requestAnimationFrame(runLoop);
