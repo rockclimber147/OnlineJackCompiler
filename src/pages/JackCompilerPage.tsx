@@ -226,10 +226,10 @@ export function JackCompilerPage() {
                           readOnly={true}
                           actions={
                             <>
-                              <button onClick={() => handleCopyClick(activeCompiledFile.content)} className="...">
+                              <button onClick={() => handleCopyClick(activeCompiledFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
                                 <Copy size={13} /> Copy
                               </button>
-                              <button onClick={() => downloadFile(activeCompiledFile.name, activeCompiledFile.content)} className="...">
+                              <button onClick={() => downloadFile(activeCompiledFile.name, activeCompiledFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
                                 <Download size={13} /> Save VM
                               </button>
                             </>
