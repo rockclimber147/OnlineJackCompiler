@@ -53,7 +53,7 @@ export class HackEmulator {
     this.execute(decoded);
   }
 
-  private decode(instruction: number): DecodedInstruction {
+  public decode(instruction: number): DecodedInstruction {
     if ((instruction & 0x8000) === 0) {
       return { type: InstructionType.A_INSTRUCTION, addressOrValue: instruction & 0x7FFF };
     } else {
