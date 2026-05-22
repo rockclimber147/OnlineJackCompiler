@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import Editor from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
 import { useHackEmulator } from "../hooks/useHackEmulator";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
 
@@ -8,35 +9,60 @@ export function HackEmulatorPage() {
   const { pc, registers, load, step, getRamRange } = useHackEmulator();
   const [source, setSource] = useState("// Write your Hack ASM here\n@10\nD=A\n@0\nM=D");
   
-  // Initialize assembler ref to avoid re-instantiating on every render
   const assembler = useRef(new Assembler());
-
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const decorationRef = useRef<string[]>([]);
+  const sourceMapRef = useRef<number[]>([]);
+  
   const handleAssembleAndLoad = () => {
     try {
       const result = assembler.current.assemble(source);
       
       if (result.success && result.binary) {
-        // Convert binary strings ("000...1") to Int16 numbers
+        sourceMapRef.current = result.sourceMap;
         const numericInstructions = result.binary.map((bin) => {
           const val = parseInt(bin, 2);
-          // Force 16-bit signed wrapping
           return (val << 16) >> 16;
         });
         
         load(numericInstructions);
       } else {
-        console.error("Assembly errors:", result.errors);
         alert(`Assembly failed: ${JSON.stringify(result.errors)}`);
       }
     } catch (e) {
       console.error("Assembler crash:", e);
-      alert("Assembler encountered an error. Check console.");
+      alert("Assembler encountered an error.");
     }
   };
 
+  useEffect(() => {
+    const editor = editorRef.current;
+    const lineNumber = sourceMapRef.current[pc];
+
+    if (editor && lineNumber) {
+      decorationRef.current = editor.deltaDecorations(
+        decorationRef.current,
+        [
+          {
+            range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+            options: {
+            isWholeLine: true,
+            className: 'asm-line-highlight',
+            overviewRuler: {
+              color: 'rgba(99, 102, 241, 0.5)',
+              position: 1
+            }
+          },
+          },
+        ]
+      );
+      
+      editor.revealLineInCenter(lineNumber);
+    }
+  }, [pc]);
+
   return (
     <div className="h-full w-full bg-slate-900 text-slate-100 flex flex-col">
-      {/* Toolbar */}
       <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-slate-950">
         <button 
           onClick={handleAssembleAndLoad} 
@@ -53,13 +79,13 @@ export function HackEmulatorPage() {
       </div>
 
       <Group className="flex-1">
-        {/* Left: ASM Editor */}
         <Panel defaultSize={40}>
           <Editor 
             theme="vs-dark"
-            language="plaintext" // Or your custom 'asm' language
+            language="plaintext"
             value={source} 
             onChange={(v) => setSource(v || "")}
+            onMount={(editor) => { editorRef.current = editor; }}
             options={{ 
               minimap: { enabled: false },
               fontSize: 14,
@@ -70,7 +96,6 @@ export function HackEmulatorPage() {
 
         <Separator className="w-1 bg-slate-800" />
 
-        {/* Middle: Registers & Screen Placeholder */}
         <Panel defaultSize={30} className="p-4 flex flex-col gap-4">
           <div className="bg-slate-950 p-4 rounded border border-slate-800">
             <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">Registers</h2>
@@ -88,7 +113,6 @@ export function HackEmulatorPage() {
 
         <Separator className="w-1 bg-slate-800" />
 
-        {/* Right: RAM Viewer */}
         <Panel defaultSize={30} className="p-4 overflow-y-auto">
           <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">RAM (0-63)</h2>
           <div className="grid grid-cols-2 gap-2 font-mono text-xs">

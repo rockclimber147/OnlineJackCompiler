@@ -13,15 +13,19 @@ export class Assembler {
   public assemble(sourceCode: string): AssemblyResult {
     const cleanLines: ParsedLine[] = Parser.cleanCode(sourceCode);
     
-    // Pass 1: Register all (LABEL) declarations
+    // Reset symbol table for fresh assembly
+    this.symbolTable = new SymbolTable(); 
+
+    // Pass 1: Register labels
     this.symbolPass(cleanLines);
 
-    // Pass 2: Translate A and C instructions into binary
-    const { binary, errors } = this.translationPass(cleanLines);
+    // Pass 2: Translate instructions
+    const { binary, sourceMap, errors } = this.translationPass(cleanLines);
 
     return {
       success: errors.length === 0,
       binary,
+      sourceMap,
       errors
     };
   }
@@ -42,11 +46,11 @@ export class Assembler {
     }
   }
 
-private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: CompilerError[] } {
+  private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: CompilerError[], sourceMap: number[] } {
     const errors: CompilerError[] = [];
     const binary: string[] = [];
+    const sourceMap: number[] = []; // This will track the mapping
     
-    // Using a context object so the address can be mutated by reference inside helper methods
     const ramContext = { address: 16 }; 
 
     for (let i = 0; i < cleanLines.length; i++) {
@@ -66,10 +70,11 @@ private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: C
           errors.push(result.error);
         } else if (result.binary) {
           binary.push(result.binary);
+          // CRITICAL: Push the mapping only when a binary instruction is generated
+          sourceMap.push(originalLine); 
         }
 
       } catch (err: any) {
-        // Fallback for generic parsing errors (highlight the whole instruction)
         errors.push({
           message: err.message,
           line: originalLine,
@@ -79,7 +84,7 @@ private translationPass(cleanLines: ParsedLine[]): { binary: string[], errors: C
       }
     }
 
-    return { binary, errors };
+    return { binary, errors, sourceMap };
   }
 
   private processAInstruction(

@@ -8,6 +8,7 @@ export interface LogMessage {
 export interface AssemblyResult {
   success: boolean;
   binary: string[];
+  sourceMap: number[];
   errors: CompilerError[];
 }
 
