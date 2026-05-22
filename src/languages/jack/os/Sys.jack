@@ -1,50 +1,56 @@
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/12/Sys.jack
-
 /**
  * A library that supports various program execution services.
+ * Handles OS initialization, program halting, and timing delays.
  */
 class Sys {
+    static int CYCLES_PER_MS;
 
-	static int CYCLES_PER_MS;
-	
     /** Performs all the initializations required by the OS. */
     function void init() {
-		let CYCLES_PER_MS = 20000 + 15000;
-		do Memory.init();
-		do Math.init();
-		do Keyboard.init();
-		do Screen.init();
-		do Output.init();
-		do Main.main();
-		do Sys.halt();
-		return;
+        // Adjust this constant based on your emulator's speed if wait() is inaccurate
+        let CYCLES_PER_MS = 350; 
+        
+        do Memory.init();
+        do Math.init();
+        do Output.init();
+        do Screen.init();
+        do Keyboard.init();
+        
+        do Main.main();
+        do Sys.halt();
+        return;
     }
 
-    /** Halts the program execution. */
+    /** Halts the program execution indefinitely. */
     function void halt() {
-		while(true){
-		}
-		return;
+        while (true) {
+            // Busy-wait loop to stop execution
+        }
+        return;
     }
 
-    /** Waits approximately duration milliseconds and returns.  */
+    /** Waits approximately 'duration' milliseconds and returns. */
     function void wait(int duration) {
-		var int i;
-		while(i < (CYCLES_PER_MS * duration)){
-			let i = i + 1;
-		}
-		return;
+        var int i, j, cycles;
+        let cycles = duration * CYCLES_PER_MS;
+        let i = 0;
+        
+        // Simple iteration-based delay
+        while (i < duration) {
+            let j = 0;
+            while (j < CYCLES_PER_MS) {
+                let j = j + 1;
+            }
+            let i = i + 1;
+        }
+        return;
     }
 
-    /** Displays the given error code in the form "ERR<errorCode>",
-     *  and halts the program's execution. */
+    /** Displays the given error code and halts the program. */
     function void error(int errorCode) {
-		do Output.printString("ERR");
-		do Output.printInt(errorCode);
-		do Sys.halt();
-		return;
+        do Output.printString("ERR");
+        do Output.printInt(errorCode);
+        do Sys.halt();
+        return;
     }
 }
