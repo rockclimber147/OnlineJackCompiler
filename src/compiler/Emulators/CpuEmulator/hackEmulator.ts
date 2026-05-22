@@ -77,18 +77,23 @@ export class HackEmulator {
       this.program_counter++;
     } else {
       const result = this.alu(!!instr.is_M_bit, instr.comp_code!);
-      const currentA = this.a_register;
       
+      // 1. Snapshot the current A-register address
+      const targetAddress = this.a_register;
+      
+      // 2. Perform destination updates
       if (instr.dest_D) this.d_register = result;
       if (instr.dest_A) this.a_register = result;
       
-      if (instr.dest_M) this.ram[currentA] = result;
+      // 3. Use the SNAPSHOT for M-write
+      if (instr.dest_M) this.ram[targetAddress] = result;
       
-      const jump = (instr.jump_JGT && result > 0) ||
-                  (instr.jump_JEQ && result === 0) ||
-                  (instr.jump_JLT && result < 0);
+      // 4. Evaluate jump
+      const jump = (!!instr.jump_JGT && result > 0) ||
+                  (!!instr.jump_JEQ && result === 0) ||
+                  (!!instr.jump_JLT && result < 0);
                   
-      this.program_counter = jump ? this.a_register : this.program_counter + 1;
+      this.program_counter = jump ? targetAddress : this.program_counter + 1;
     }
   }
 
