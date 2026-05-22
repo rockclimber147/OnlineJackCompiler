@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import { Virtuoso } from 'react-virtuoso';
 import * as monaco from "monaco-editor";
 import { useHackEmulator } from "../hooks/useHackEmulator";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
@@ -10,7 +9,7 @@ import { RegisterPanel } from "../components/Emulator/RegisterPanel";
 import { RamViewer } from "../components/Emulator/RamViewer";
 
 export function HackEmulatorPage() {
-  const { pc, registers, load, step, getRamRange, setRam } = useHackEmulator();
+  const { pc, registers, load, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed } = useHackEmulator();
   const [source, setSource] = useState("// Write your Hack ASM here\n@10\nD=A\n@0\nM=D");
   const [errors, setErrors] = useState<CompilerError[]>([]);
 
@@ -18,8 +17,6 @@ export function HackEmulatorPage() {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const decorationCollectionRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
   const sourceMapRef = useRef<number[]>([]);
-
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   
   const handleAssembleAndLoad = () => {
     try {
@@ -82,6 +79,25 @@ return (
         >
           Step
         </button>
+
+        <button 
+          onClick={() => setIsRunning(!isRunning)} 
+          className={`px-3 py-1 rounded text-sm font-medium ${isRunning ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+        >
+          {isRunning ? "Stop" : "Run"}
+        </button>
+
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <span>Speed:</span>
+          <input 
+            type="range" 
+            min="1" 
+            max="100" 
+            value={speed} 
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="w-24 accent-indigo-500"
+          />
+        </div>
       </div>
 
       <Group className="flex-1">
@@ -89,7 +105,7 @@ return (
         <Panel defaultSize={40}>
           <DebuggerCodeDisplay 
             title="Hack Assembly"
-            language="asm"
+            language="hackasm"
             value={source}
             onChange={setSource}
             pc={pc}

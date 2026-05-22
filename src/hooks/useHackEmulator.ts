@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { HackEmulator } from '../compiler/Emulators/CpuEmulator/hackEmulator';
 
 export function useHackEmulator() {
   const cpu = useRef(new HackEmulator());
   const [pc, setPc] = useState(0);
   const [registers, setRegisters] = useState({ a: 0, d: 0 });
+  const [isRunning, setIsRunning] = useState(false);
+  const [speed, setSpeed] = useState(50);
 
   const load = (binary: number[]) => {
     cpu.current.loadProgram(binary);
@@ -37,5 +39,23 @@ export function useHackEmulator() {
     return range;
   }, []);
 
-  return { pc, registers, load, step, getRam, setRam, getRamRange };
+  useEffect(() => {
+    if (!isRunning) return;
+
+    let animationId: number;
+
+    const runLoop = () => {
+      const cyclesPerFrame = speed === 100 ? 1000 : Math.ceil(speed / 2);
+
+      for (let i = 0; i < cyclesPerFrame; i++) {
+        step();
+      }
+      animationId = requestAnimationFrame(runLoop);
+    };
+
+    animationId = requestAnimationFrame(runLoop);
+    return () => cancelAnimationFrame(animationId);
+  }, [isRunning, speed]);
+
+  return { pc, registers, load, step, getRam, setRam, getRamRange, isRunning, setIsRunning, speed, setSpeed };
 }
