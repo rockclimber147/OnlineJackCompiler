@@ -1,6 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { HackEmulator } from '../compiler/Emulators/CpuEmulator/hackEmulator';
 
+// Configuration constants for emulator behavior
+const MIN_SPEED = 1;
+const MAX_SPEED = 100;
+const MIN_CYCLES_PER_FRAME = 1;
+const MAX_CYCLES_PER_FRAME = 1000;
+const SPEED_EXPONENT = Math.log10(MAX_CYCLES_PER_FRAME / MIN_CYCLES_PER_FRAME);
+
 export function useHackEmulator() {
   const cpu = useRef(new HackEmulator());
   const [pc, setPc] = useState(0);
@@ -14,14 +21,14 @@ export function useHackEmulator() {
     setRegisters({ a: 0, d: 0 });
   };
 
-  const step = () => {
+  const step = useCallback(() => {
     cpu.current.executeNextInstruction();
     setPc(cpu.current.program_counter);
     setRegisters({ 
       a: cpu.current.a_register, 
       d: cpu.current.d_register 
     });
-  };
+  }, []);
 
   const getRam = useCallback((addr: number) => {
     return cpu.current.getRam(addr);
@@ -43,19 +50,28 @@ export function useHackEmulator() {
     if (!isRunning) return;
 
     let animationId: number;
+    let lastExecutionTime = performance.now();
 
-    const runLoop = () => {
-      const cyclesPerFrame = speed === 100 ? 1000 : Math.ceil(speed / 2);
+    const runLoop = (currentTime: number) => {
+      const normalizedSpeed = (speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+      
+      // Logarithmic delay: 1000ms at speed 0, ~0ms at speed 100
+      const delayPerCycle = 1000 * Math.pow(0.01, normalizedSpeed);
+      
+      const deltaTime = currentTime - lastExecutionTime;
 
-      for (let i = 0; i < cyclesPerFrame; i++) {
+      if (deltaTime >= delayPerCycle) {
+        // Execute the step
         step();
+        lastExecutionTime = currentTime;
       }
+
       animationId = requestAnimationFrame(runLoop);
     };
 
     animationId = requestAnimationFrame(runLoop);
     return () => cancelAnimationFrame(animationId);
-  }, [isRunning, speed]);
+  }, [isRunning, speed, step]);
 
   return { pc, registers, load, step, getRam, setRam, getRamRange, isRunning, setIsRunning, speed, setSpeed };
 }
