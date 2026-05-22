@@ -1,6 +1,5 @@
-// Emulator constants
-const MEMORY_SIZE = 32768;
-const ROM_MAX_SIZE = 32768;
+export const MEMORY_SIZE = 32768;
+export const ROM_MAX_SIZE = 32768;
 
 export const InstructionType = {
   A_INSTRUCTION: 0,
@@ -118,5 +117,6 @@ export class HackEmulator {
   }
 
   // Getters/Setters for UI interaction
-  getRam(addr: number): number { return this.ram[addr]; }
+  public getRam(addr: number): number { return this.ram[addr]; }
+  public setRam(addr: number, val: number) { this.ram[addr] = val }
 }

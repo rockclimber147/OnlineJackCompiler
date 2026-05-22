@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CodeDisplay, type CodeDisplayProps } from "./CodeDisplay";
+import { CodeDisplay, type CodeDisplayProps } from "../CodeDisplay";
 
 // components/DebuggerCodeDisplay.tsx
 interface DebuggerCodeDisplayProps extends CodeDisplayProps {

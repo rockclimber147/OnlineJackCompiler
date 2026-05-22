@@ -4,11 +4,13 @@ import { Virtuoso } from 'react-virtuoso';
 import * as monaco from "monaco-editor";
 import { useHackEmulator } from "../hooks/useHackEmulator";
 import { Assembler } from "../compiler/HackAssembler/Assembler";
-import { DebuggerCodeDisplay } from "../components/DebuggerCodeDisplay";
+import { DebuggerCodeDisplay } from "../components/Emulator/DebuggerCodeDisplay";
 import type { CompilerError } from "../types/compiler";
+import { RegisterPanel } from "../components/Emulator/RegisterPanel";
+import { RamViewer } from "../components/Emulator/RamViewer";
 
 export function HackEmulatorPage() {
-  const { pc, registers, load, step, getRamRange } = useHackEmulator();
+  const { pc, registers, load, step, getRamRange, setRam } = useHackEmulator();
   const [source, setSource] = useState("// Write your Hack ASM here\n@10\nD=A\n@0\nM=D");
   const [errors, setErrors] = useState<CompilerError[]>([]);
 
@@ -16,6 +18,8 @@ export function HackEmulatorPage() {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const decorationCollectionRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
   const sourceMapRef = useRef<number[]>([]);
+
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   
   const handleAssembleAndLoad = () => {
     try {
@@ -62,8 +66,9 @@ export function HackEmulatorPage() {
     }
   }, [pc]);
 
-  return (
+return (
     <div className="h-full w-full bg-slate-900 text-slate-100 flex flex-col">
+      {/* Toolbar */}
       <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-slate-950">
         <button 
           onClick={handleAssembleAndLoad} 
@@ -80,56 +85,34 @@ export function HackEmulatorPage() {
       </div>
 
       <Group className="flex-1">
+        {/* Left: Code Editor */}
         <Panel defaultSize={40}>
           <DebuggerCodeDisplay 
             title="Hack Assembly"
-            language="hackasm"
+            language="asm"
             value={source}
             onChange={setSource}
             pc={pc}
             sourceMap={sourceMapRef.current}
             errors={errors}
-            onMount={(editor) => { editorRef.current = editor; }}
           />
         </Panel>
 
         <Separator className="w-1 bg-slate-800" />
 
+        {/* Center: Screen & Registers */}
         <Panel defaultSize={30} className="p-4 flex flex-col gap-4">
           <div className="flex-1 bg-slate-950 rounded border border-slate-800 flex items-center justify-center text-slate-600 font-mono text-sm">
             [ Screen Placeholder ]
           </div>
-          <div className="bg-slate-950 p-4 rounded border border-slate-800">
-            <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">Registers</h2>
-            <div className="font-mono text-lg space-y-1">
-              <div className="flex justify-between"><span>PC:</span> <span className="text-indigo-400">{pc}</span></div>
-              <div className="flex justify-between"><span>A:</span> <span className="text-emerald-400">{registers.a}</span></div>
-              <div className="flex justify-between"><span>D:</span> <span className="text-amber-400">{registers.d}</span></div>
-            </div>
-          </div>
+          <RegisterPanel pc={pc} registers={registers} />
         </Panel>
 
         <Separator className="w-1 bg-slate-800" />
 
-        <Panel defaultSize={30} className="flex flex-col p-4 bg-slate-900 border-l border-slate-800">
-          <h2 className="text-xs text-slate-400 uppercase tracking-wider mb-3">RAM</h2>
-          <div className="flex-1 overflow-hidden">
-            <Virtuoso
-              style={{ height: '100%' }}
-              totalCount={16384}
-              itemContent={(index) => {
-                const val = getRamRange(index, 1)[0];
-                return (
-                  <div className="flex items-center justify-between px-2 py-1 border-b border-slate-800/50 font-mono text-xs">
-                    <span className="text-slate-600 w-12 shrink-0">{index}:</span>
-                    <span className={val !== 0 ? "text-indigo-400 font-bold" : "text-slate-200"}>
-                      {val}
-                    </span>
-                  </div>
-                );
-              }}
-            />
-          </div>
+        {/* Right: RAM Viewer */}
+        <Panel defaultSize={30}>
+          <RamViewer getRamRange={getRamRange} setRam={setRam} />
         </Panel>
       </Group>
     </div>

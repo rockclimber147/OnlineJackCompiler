@@ -25,6 +25,10 @@ export function useHackEmulator() {
     return cpu.current.getRam(addr);
   }, []);
 
+  const setRam = useCallback((addr: number, value: number) => {
+    cpu.current.setRam(addr, value);
+  }, []);
+
   const getRamRange = useCallback((start: number, count: number) => {
     const range = [];
     for (let i = 0; i < count; i++) {
@@ -33,5 +37,5 @@ export function useHackEmulator() {
     return range;
   }, []);
 
-  return { pc, registers, load, step, getRam, getRamRange };
+  return { pc, registers, load, step, getRam, setRam, getRamRange };
 }
