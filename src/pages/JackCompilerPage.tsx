@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { Play, Copy, Download, Database } from "lucide-react";
 
@@ -13,7 +13,7 @@ import { copyToClipboard, copyWorkspaceToClipboard, downloadAllFilesAsZip, downl
 import { JACK_OS_FILES } from "../constants/JackOS";
 
 export function JackCompilerPage() {
-  const [activeRightTab, setActiveRightTab] = useState<"vm" | "ast" | "symbols">("vm");
+  const [activeRightTab, setActiveRightTab] = useState<"vm" | "concatenated" | "symbols">("vm");
   const [activeCompiledFileId, setActiveCompiledFileId] = useState<string | null>(null);
 
   const { 
@@ -90,6 +90,13 @@ export function JackCompilerPage() {
     }
   };
 
+  const concatenatedVM = useMemo(() => {
+  return compiledFiles
+    .map(f => `// --- FILE: ${f.name} ---\n${f.content}\n`)
+    .join('\n');
+
+}, [compiledFiles]);
+
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-slate-300 overflow-hidden relative select-none">
       <main className="flex-1 flex flex-col min-h-0 h-full">
@@ -159,6 +166,9 @@ export function JackCompilerPage() {
                   <button onClick={() => setActiveRightTab("vm")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "vm" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
                     VM OUTPUT
                   </button>
+                  <button onClick={() => setActiveRightTab("concatenated")} className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "vm" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}>
+                    SINGLE VM
+                  </button>
                   <button 
                     onClick={() => setActiveRightTab("symbols")} 
                     className={`px-4 flex items-center justify-center text-xs font-medium border-r border-black/40 transition-colors cursor-pointer ${activeRightTab === "symbols" ? "bg-[#252526] text-indigo-400 border-t-2 border-t-indigo-500" : "text-slate-500 hover:text-slate-300 bg-[#1e1e1e] border-t-2 border-t-transparent"}`}
@@ -184,7 +194,6 @@ export function JackCompilerPage() {
               {/* Tab Contents */}
               <div className="flex-1 min-h-0 relative">
                 {activeRightTab === "vm" ? (
-                  /* NESTED RESIZABLE LAYOUT FOR VM OUTPUTS */
                   <Group>
                     <Panel defaultSize={25} minSize={15}>
                       <FileExplorer 
@@ -203,7 +212,7 @@ export function JackCompilerPage() {
                         }}
                         onCopyAll={async () => {
                           const success = await copyWorkspaceToClipboard(compiledFiles);
-                          if (success) addLog(`Copied ${compiledFiles.length} compiled VM files to clipboard. Ready to paste in the VM Translator!`, "success");
+                          if (success) addLog(`Copied ${compiledFiles.length} files to clipboard.`, "success");
                         }}
                       />
                     </Panel>
@@ -217,10 +226,10 @@ export function JackCompilerPage() {
                           readOnly={true}
                           actions={
                             <>
-                              <button onClick={() => handleCopyClick(activeCompiledFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                              <button onClick={() => handleCopyClick(activeCompiledFile.content)} className="...">
                                 <Copy size={13} /> Copy
                               </button>
-                              <button onClick={() => downloadFile(activeCompiledFile.name, activeCompiledFile.content)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                              <button onClick={() => downloadFile(activeCompiledFile.name, activeCompiledFile.content)} className="...">
                                 <Download size={13} /> Save VM
                               </button>
                             </>
@@ -233,7 +242,19 @@ export function JackCompilerPage() {
                   </Group>
                 ) : activeRightTab === "symbols" ? (
                   <JackSymbolTableViewer symbolTable={symbolTable} />
-
+                ) : activeRightTab === "concatenated" ? (
+                  /* CONCATENATED VM VIEWER */
+                  <CodeDisplay
+                    title="All Compiled VM Files"
+                    value={concatenatedVM}
+                    language="hackvm"
+                    readOnly={true}
+                    actions={
+                      <button onClick={() => handleCopyClick(concatenatedVM)} className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 px-2 py-1 rounded hover:bg-slate-800 transition-colors text-xs font-medium cursor-pointer">
+                        <Copy size={13} /> Copy All
+                      </button>
+                    }
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center text-slate-500 text-sm italic">
                     AST Viewer not yet implemented.
