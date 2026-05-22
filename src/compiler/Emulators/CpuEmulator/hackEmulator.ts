@@ -71,21 +71,23 @@ export class HackEmulator {
     }
   }
 
-  private execute(instr: DecodedInstruction): void {
+  public execute(instr: DecodedInstruction): void {
     if (instr.type === InstructionType.A_INSTRUCTION) {
       this.a_register = instr.addressOrValue!;
       this.program_counter++;
     } else {
       const result = this.alu(!!instr.is_M_bit, instr.comp_code!);
+      const currentA = this.a_register;
       
       if (instr.dest_D) this.d_register = result;
       if (instr.dest_A) this.a_register = result;
-      if (instr.dest_M) this.ram[this.a_register] = result;
+      
+      if (instr.dest_M) this.ram[currentA] = result;
       
       const jump = (instr.jump_JGT && result > 0) ||
-                   (instr.jump_JEQ && result === 0) ||
-                   (instr.jump_JLT && result < 0);
-                   
+                  (instr.jump_JEQ && result === 0) ||
+                  (instr.jump_JLT && result < 0);
+                  
       this.program_counter = jump ? this.a_register : this.program_counter + 1;
     }
   }
