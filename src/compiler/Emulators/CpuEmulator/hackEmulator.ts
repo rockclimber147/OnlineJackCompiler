@@ -43,6 +43,10 @@ export class HackEmulator {
     this.program_counter = 0;
   }
 
+  clearMemory(): void {
+    this.ram.fill(0);
+  }
+
   executeNextInstruction(): void {
     const instruction = this.rom[this.program_counter];
     const decoded = this.decode(instruction);

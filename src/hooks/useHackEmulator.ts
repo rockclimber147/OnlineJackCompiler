@@ -18,6 +18,11 @@ export function useHackEmulator() {
   const [speed, setSpeed] = useState(50);
   const [frameCount, setFrameCount] = useState(0);
 
+  const clearRam = useCallback(() => {
+    cpu.current.clearMemory(); 
+    setFrameCount(f => f + 1); 
+  }, []);
+
   const load = (binary: number[]) => {
     cpu.current.loadProgram(binary);
     setPc(0);
@@ -88,6 +93,7 @@ export function useHackEmulator() {
     pc, 
     registers, 
     load, 
+    clearRam,
     step, 
     getRam, 
     setRam, 
