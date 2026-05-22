@@ -1,66 +1,95 @@
-class Memory{
+/**
+ * Memory operations and heap management library.
+ * 
+ * Provides direct access to the Hack computer's RAM and implements a 
+ * dynamic memory allocation system. The heap uses a linked-list of 
+ * free segments to manage memory, employing a "Best-Fit" allocation 
+ * algorithm.
+ */
+class Memory {
 
-	static Array RAM;
-	static Array HEAP;
-	
-	function void init(){
-		let RAM = 0;
-		let HEAP = 2048;
-		let HEAP[0] = -1; // No more free segments
-		let HEAP[1] = 16384 - 2048 - 2; // Initial free size
-		return;
-	}
+    static Array RAM;
+    static Array HEAP;
 
-	function int peek(int address){
-		return RAM[address];
-	}
-	
-	function void poke(int address, int value){
-		let RAM[address] = value;
-		return;
-	}
-	
-	function Array alloc(int size){
-		var Array current, selected, block;
-		var int currentSize, selectedSize;
-		
-		if(size < 0){
-			do Sys.error(5);
-		}
-		
-		let current = HEAP;
-		let selected = -1;
-		let selectedSize = HEAP[1] + 1;  // Strictly greater than max
-		let currentSize = current[1];
-		while(current > -1){
-			if(~(currentSize < (size + 2))){
-				if(currentSize < selectedSize){
-					let selected = current;
-					let selectedSize = currentSize;
-				}
-			}
-			let current = current[0];
-			let currentSize = current[1];
-		}
-		if(selected = -1){
-			do Sys.error(6);
-		}
-		
-		let selected[1] = selected[1] - size -2;
-		let block = selected + selected[1] + 1;
-		let block[0] = -1;
-		let block[1] = size;
-		return block + 2;
-	}
-	
-	function void deAlloc(Array array){
-		var Array current, block;
-		let block = array - 2;
-		let current = HEAP;
-		while(current[0] > 0){
-			let current = current[0];
-		}
-		let current[0] = block;
-		return;
-	}
+    /** 
+     * Initializes the memory management system.
+     * Sets the base address of the heap and creates an initial 
+     * free segment covering the entire available heap space.
+     */
+    function void init() {
+        let RAM = 0;
+        let HEAP = 2048;
+        let HEAP[0] = -1; // -1 indicates the end of the free list
+        let HEAP[1] = 16384 - 2048 - 2; // Size of the free segment
+        return;
+    }
+
+    /** 
+     * Returns the value stored in the main memory at the specified address.
+     */
+    function int peek(int address) {
+        return RAM[address];
+    }
+
+    /** 
+     * Sets the value of the main memory at the specified address.
+     */
+    function void poke(int address, int value) {
+        let RAM[address] = value;
+        return;
+    }
+
+    /** 
+     * Allocates a memory block of the requested size.
+     * Implements a "Best-Fit" algorithm, searching for the smallest 
+     * free segment that can accommodate the requested size (plus header overhead).
+     * Raises error 5 if size is less than 0, and error 6 if memory is exhausted.
+     */
+    function Array alloc(int size) {
+        var Array current, selected, block;
+        var int currentSize, selectedSize;
+        
+        if(size < 0){
+            do Sys.error(5);
+        }
+        
+        let current = HEAP;
+        let selected = -1;
+        let selectedSize = HEAP[1] + 1;  // Strictly greater than max
+        let currentSize = current[1];
+        while(current > -1){
+            if(~(currentSize < (size + 2))){
+                if(currentSize < selectedSize){
+                    let selected = current;
+                    let selectedSize = currentSize;
+                }
+            }
+            let current = current[0];
+            let currentSize = current[1];
+        }
+        if(selected = -1){
+            do Sys.error(6);
+        }
+        
+        let selected[1] = selected[1] - size -2;
+        let block = selected + selected[1] + 1;
+        let block[0] = -1;
+        let block[1] = size;
+        return block + 2;
+    }
+
+    /** 
+     * De-allocates the memory block pointed to by the given array.
+     * Returns the block to the free list for future allocation.
+     */
+    function void deAlloc(Array array) {
+        var Array current, block;
+        let block = array - 2;
+        let current = HEAP;
+        while(current[0] > 0){
+            let current = current[0];
+        }
+        let current[0] = block;
+        return;
+    }
 }
