@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Binary, Wrench, FileCode2, Braces } from "lucide-react";
+import { Binary, Wrench, FileCode2, Braces, Cpu } from "lucide-react";
 import { type TabType } from "./types/compiler";
 import { AssemblerPage } from "./pages/AssemblerPage";
 import { VMTranslatorPage } from "./pages/VMTranslatorPage";
 import { JackCompilerPage } from "./pages/JackCompilerPage";
+import { HackEmulatorPage } from "./pages/HackEmulatorPage";
 
 export default function App() {
   // 1. Initialize state from localStorage (or default to "assembler")
@@ -38,6 +39,17 @@ export default function App() {
             >
               <Binary size={16} /> Assembler
             </button>
+
+            <button
+              onClick={() => setActiveTab("hackemulator")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === "hackemulator"
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              }`}
+            >
+              <Cpu size={16} /> CPU Emulator
+            </button>
             
             <button
               onClick={() => setActiveTab("vmtranslator")}
@@ -60,17 +72,6 @@ export default function App() {
             >
               <Braces size={16} /> Jack Compiler
             </button>
-
-            {/* <button
-              onClick={() => setActiveTab("cpuemulator")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                activeTab === "cpuemulator"
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-              }`}
-            >
-              <Cpu size={16} /> CPU Emulator
-            </button> */}
           </nav>
         </div>
       </header>
@@ -88,6 +89,10 @@ export default function App() {
 
         <div className={`h-full w-full ${activeTab === "jackcompiler" ? "block" : "hidden"}`}>
           <JackCompilerPage />
+        </div>
+
+        <div className={`h-full w-full ${activeTab === "hackemulator" ? "block" : "hidden"}`}>
+          <HackEmulatorPage />
         </div>
 
       </div>
