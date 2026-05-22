@@ -1,9 +1,9 @@
 import { useRef, useEffect } from "react";
-import Editor, { type Monaco, type BeforeMount } from "@monaco-editor/react";
+import Editor, { type Monaco, type BeforeMount, type OnMount } from "@monaco-editor/react";
 import { registerCustomLanguages } from "../languages"; 
 import { type CompilerError } from "../types/compiler"; // <-- Import the new type
 
-interface CodeDisplayProps {
+export interface CodeDisplayProps {
   title: string;
   value: string;
   onChange?: (value: string) => void;
@@ -11,6 +11,7 @@ interface CodeDisplayProps {
   readOnly?: boolean;
   errors?: CompilerError[]; // <-- UPDATED: Array of structured objects
   actions?: React.ReactNode; 
+  onMount?: OnMount;
 }
 
 export function CodeDisplay({ 
@@ -20,7 +21,8 @@ export function CodeDisplay({
   language, 
   readOnly = false,
   errors = [],
-  actions 
+  actions,
+  onMount 
 }: CodeDisplayProps) {
   
   const editorRef = useRef<any>(null);
@@ -70,7 +72,10 @@ export function CodeDisplay({
           language={language}
           theme="vs-dark"
           beforeMount={handleBeforeMount}
-          onMount={handleEditorDidMount} 
+          onMount={(editor, monaco) => {
+            handleEditorDidMount(editor, monaco);
+            onMount?.(editor, monaco); 
+          }} 
           options={{
             readOnly,
             minimap: { enabled: false },
