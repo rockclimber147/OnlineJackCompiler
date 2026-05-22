@@ -8,10 +8,11 @@ import type { CompilerError } from "../types/compiler";
 import { RegisterPanel } from "../components/Emulator/RegisterPanel";
 import { RamViewer } from "../components/Emulator/RamViewer";
 import { EmulatorScreen } from "../components/Emulator/EmulatorScreen";
+import RectASM from "../languages/hack/presets/rect.asm?raw"
 
 export function HackEmulatorPage() {
   const { pc, registers, load, clearRam, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed, frameCount } = useHackEmulator();
-  const [source, setSource] = useState("// Write your Hack ASM here\n@10\nD=A\n@0\nM=D");
+  const [source, setSource] = useState(RectASM);
   const [errors, setErrors] = useState<CompilerError[]>([]);
 
   const assembler = useRef(new Assembler());
