@@ -10,7 +10,7 @@ import { RamViewer } from "../components/Emulator/RamViewer";
 import { EmulatorScreen } from "../components/Emulator/EmulatorScreen";
 
 export function HackEmulatorPage() {
-  const { pc, registers, load, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed } = useHackEmulator();
+  const { pc, registers, load, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed, frameCount } = useHackEmulator();
   const [source, setSource] = useState("// Write your Hack ASM here\n@10\nD=A\n@0\nM=D");
   const [errors, setErrors] = useState<CompilerError[]>([]);
 
@@ -120,7 +120,10 @@ return (
         {/* Center: Screen & Registers */}
         <Panel defaultSize={30} className="p-4 flex flex-col gap-4">
           <div className="flex-1 bg-slate-950 rounded border border-slate-800 flex items-center justify-center">
-            <EmulatorScreen getRamRange={getRamRange} />
+            <EmulatorScreen 
+              getRamRange={getRamRange}
+              frameCount={frameCount}
+            />
           </div>
           <RegisterPanel pc={pc} registers={registers} />
         </Panel>

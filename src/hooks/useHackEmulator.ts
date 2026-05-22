@@ -1,8 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { HackEmulator } from '../compiler/Emulators/CpuEmulator/hackEmulator';
 
-const MIN_SPEED = 1;
+// Configuration Constants
+const MIN_SPEED = 0;
 const MAX_SPEED = 100;
+export const MIN_IPS = 1;         // Instructions per second at slider 0
+export const MAX_IPS = 1000;      // Instructions per second at slider 100
+const IPS_EXPONENT = 3;    // Determines the curve (10^3 = 1000)
+const BURST_CAP = 500;     // Safety cap to prevent UI freezes
+const MS_PER_SECOND = 1000;
 
 export function useHackEmulator() {
   const cpu = useRef(new HackEmulator());
@@ -10,11 +16,13 @@ export function useHackEmulator() {
   const [registers, setRegisters] = useState({ a: 0, d: 0 });
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(50);
+  const [frameCount, setFrameCount] = useState(0);
 
   const load = (binary: number[]) => {
     cpu.current.loadProgram(binary);
     setPc(0);
     setRegisters({ a: 0, d: 0 });
+    setFrameCount(0);
   };
 
   const step = useCallback(() => {
@@ -32,6 +40,8 @@ export function useHackEmulator() {
 
   const setRam = useCallback((addr: number, value: number) => {
     cpu.current.setRam(addr, value);
+    // Force a visual refresh when RAM is modified manually
+    setFrameCount(f => f + 1);
   }, []);
 
   const getRamRange = useCallback((start: number, count: number) => {
@@ -49,21 +59,21 @@ export function useHackEmulator() {
     let lastTimestamp = performance.now();
 
     const runLoop = (now: number) => {
-      // 1. Calculate target instructions per second (IPS)
-      // Map speed 0 -> 1 IPS, speed 100 -> 1000 IPS
-      const targetIPS = Math.pow(10, (speed / 100) * 3); 
+      // Calculate target instructions per second (IPS)
+      const normalizedSpeed = (speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+      const targetIPS = Math.pow(10, normalizedSpeed * IPS_EXPONENT); 
       
-      // 2. Calculate elapsed time in seconds
-      const elapsedSeconds = (now - lastTimestamp) / 1000;
+      // Calculate elapsed time in seconds
+      const elapsedSeconds = (now - lastTimestamp) / MS_PER_SECOND;
       
-      // 3. Determine how many cycles to run this frame
-      // We want: targetIPS * elapsedSeconds
+      // Determine how many cycles to run
       const instructionsToRun = Math.floor(targetIPS * elapsedSeconds);
 
       if (instructionsToRun > 0) {
-        for (let i = 0; i < Math.min(instructionsToRun, 500); i++) {
+        for (let i = 0; i < Math.min(instructionsToRun, BURST_CAP); i++) {
           step();
         }
+        setFrameCount(f => f + 1);
         lastTimestamp = now;
       }
 
@@ -74,5 +84,18 @@ export function useHackEmulator() {
     return () => cancelAnimationFrame(animationId);
   }, [isRunning, speed, step]);
 
-  return { pc, registers, load, step, getRam, setRam, getRamRange, isRunning, setIsRunning, speed, setSpeed };
+  return { 
+    pc, 
+    registers, 
+    load, 
+    step, 
+    getRam, 
+    setRam, 
+    getRamRange, 
+    isRunning, 
+    setIsRunning, 
+    speed, 
+    setSpeed,
+    frameCount
+  };
 }
