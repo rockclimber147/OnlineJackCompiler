@@ -180,10 +180,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       content: FibonacciSysRaw
     };
 
-    runIntegrationTest([mainFile, sysFile], (e) => {
-      // Start SP at 256. The bootstrap 'call' will push 5 values, leaving SP at 261 
-      // exactly as the official .tst file expects before entering Sys.init.
-      e.poke(0, 256); 
+    runIntegrationTest([mainFile, sysFile], (_) => {
     }, 111); // 110 cycles (from the .tst file) + 1 cycle for our manual bootstrap call
 
     expect(emu.peek(0)).toBe(262);
@@ -290,10 +287,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       content: StaticsTestClass2Raw
     };
 
-    runIntegrationTest([sysFile, class1File, class2File], (e) => {
-      // Start SP at 256. The bootstrap 'call' will push 5 frame values, 
-      // leaving SP at 261 as required by the test before entering Sys.init.
-      e.poke(0, 256);
+    runIntegrationTest([sysFile, class1File, class2File], (_) => {
     }, 37); // 36 cycles (from .tst file) + 1 cycle for our bootstrap call
 
     // Exact memory verifications from StaticsTest.cmp
@@ -317,10 +311,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       content: catenatedContent
     };
 
-    runIntegrationTest([catenatedFile], (e) => {
-      // Start SP at 256. The bootstrap 'call' will push 5 frame values, 
-      // leaving SP at 261 as required by the test before entering Sys.init.
-      e.poke(0, 256);
+    runIntegrationTest([catenatedFile], (_) => {
     }, 37); // 36 cycles (from .tst file) + 1 cycle for our bootstrap call
 
     // Exact memory verifications from StaticsTest.cmp

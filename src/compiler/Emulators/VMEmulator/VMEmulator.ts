@@ -32,31 +32,28 @@ export class VMEmulator {
     this.initSegmentMap();
   }
   
-public loadProgram(files: VirtualFile[], skipBootstrap: boolean = false): void {
+  public loadProgram(files: VirtualFile[], skipBootstrap: boolean = false): void {
     this.symbolTable.clear();
     this.staticMap.clear();
     this.nextStaticAddress = 16;
     this.callStack = [];
 
-    let filesToParse = files;
-    const needsBootstrap = !skipBootstrap && files.some(f => f.content.includes('function Sys.init'));
-
-    if (needsBootstrap) {
-      this.ram[0] = 256;
-      const bootstrapFile: VirtualFile = {
-        id: 'auto-bootstrap',
-        name: 'Bootstrap.vm',
-        language: 'vm',
-        content: 'call Sys.init 0'
-      };
-      filesToParse = [bootstrapFile, ...files];
-    }
-
-    const { instructions, sourceMap } = VMParser.parse(filesToParse, this.symbolTable);
+    const { instructions, sourceMap } = VMParser.parse(files, this.symbolTable);
 
     this.rom = instructions;
     this.sourceMap = sourceMap;
+    
+    this.ram[0] = 256; 
     this.program_counter = 0;
+    const needsBootstrap = !skipBootstrap && this.symbolTable.hasFunction('Sys.init');
+
+    if (needsBootstrap) {
+      this.executeFunctionCall({
+        type: InstructionType.FUNCTION_CALL,
+        command: 'Sys.init',
+        value: 0
+      } as DecodedInstruction); 
+    }
   }
 
   public stackPush(val: number): void {

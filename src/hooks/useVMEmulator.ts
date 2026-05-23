@@ -38,6 +38,7 @@ export function useVMEmulator() {
     } else {
       // Fallback if not implemented: zero out RAM manually
       for(let i = 0; i < 32768; i++) vm.current.poke(i, 0);
+      vm.current.poke(0, 256);
     }
     setFrameCount(f => f + 1); 
   }, []);
