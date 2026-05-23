@@ -321,7 +321,11 @@ public loadProgram(files: VirtualFile[], skipBootstrap: boolean = false): void {
   }
 
   public getCallStack(): string[] {
-    return [...this.callStack];
+    return this.callStack;
+  }
+
+  public getSourceMap(): number[] {
+    return this.sourceMap;
   }
 
   private peekLocal(index: number): number { return this.ram[this.ram[this.LCL_PTR] + index]; }

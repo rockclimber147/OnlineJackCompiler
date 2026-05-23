@@ -5,6 +5,7 @@ import { AssemblerPage } from "./pages/AssemblerPage";
 import { VMTranslatorPage } from "./pages/VMTranslatorPage";
 import { JackCompilerPage } from "./pages/JackCompilerPage";
 import { HackEmulatorPage } from "./pages/HackEmulatorPage";
+import { VMEmulatorPage } from "./pages/VMEmulatorPage";
 
 export default function App() {
   // 1. Initialize state from localStorage (or default to "assembler")
@@ -63,6 +64,17 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => setActiveTab("vmemulator")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === "vmemulator"
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              }`}
+            >
+              <FileCode2 size={16} /> VM Emulator
+            </button>
+
+            <button
               onClick={() => setActiveTab("jackcompiler")}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === "jackcompiler"
@@ -93,6 +105,10 @@ export default function App() {
 
         <div className={`h-full w-full ${activeTab === "hackemulator" ? "block" : "hidden"}`}>
           <HackEmulatorPage />
+        </div>
+
+        <div className={`h-full w-full ${activeTab === "vmemulator" ? "block" : "hidden"}`}>
+          <VMEmulatorPage/>
         </div>
 
       </div>

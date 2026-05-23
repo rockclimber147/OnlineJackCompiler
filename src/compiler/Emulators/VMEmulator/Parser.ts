@@ -45,7 +45,7 @@ public static parse(files: VirtualFile[], symbolTable: SymbolTable): VMParseResu
           
         } else {
           instructions.push(text);
-          sourceMap.push(globalLineOffset + originalLine);
+          sourceMap.push(globalLineOffset + originalLine + 1);
         }
       }
 

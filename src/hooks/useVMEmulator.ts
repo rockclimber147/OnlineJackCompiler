@@ -88,6 +88,10 @@ export function useVMEmulator() {
     return range;
   }, []);
 
+  const getSourceMap = useCallback(() => {
+    return vm.current.getSourceMap();
+  }, []);
+
   useEffect(() => {
     if (!isRunning) return;
 
@@ -130,6 +134,7 @@ export function useVMEmulator() {
     getRam, 
     setRam, 
     getRamRange, 
+    getSourceMap,
     isRunning, 
     setIsRunning, 
     speed, 
