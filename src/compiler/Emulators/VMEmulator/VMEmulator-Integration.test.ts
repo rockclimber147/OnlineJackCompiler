@@ -154,9 +154,10 @@ describe('VM Emulator Integration Tests - Project 8', () => {
   const runIntegrationTest = (
     files: VirtualFile[],
     setup: (e: VMEmulator) => void,
-    cycles: number
+    cycles: number,
+    skipBootstrap: boolean = false
   ) => {
-    emu.loadProgram(files);
+    emu.loadProgram(files, skipBootstrap);
     setup(emu);
 
     for (let i = 0; i < cycles; i++) {
@@ -165,14 +166,6 @@ describe('VM Emulator Integration Tests - Project 8', () => {
   };
 
   it('runs Project8/Function Calls/FibonacciElement Test Case', () => {
-    // Inject the bootstrap call so the VM starts by executing Sys.init
-    const bootstrapFile: VirtualFile = {
-      id: 'Bootstrap',
-      name: 'Bootstrap.vm',
-      language: 'vm',
-      content: 'call Sys.init 0'
-    };
-    
     const mainFile: VirtualFile = {
       id: 'FibonacciMain',
       name: 'Main.vm',
@@ -187,7 +180,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       content: FibonacciSysRaw
     };
 
-    runIntegrationTest([bootstrapFile, mainFile, sysFile], (e) => {
+    runIntegrationTest([mainFile, sysFile], (e) => {
       // Start SP at 256. The bootstrap 'call' will push 5 values, leaving SP at 261 
       // exactly as the official .tst file expects before entering Sys.init.
       e.poke(0, 256); 
@@ -228,7 +221,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       for (let i = 261; i <= 299; i++) {
         e.poke(i, -1);
       }
-    }, 50);
+    }, 50, true);
 
     // Exact memory verifications from NestedCall.cmp
     expect(emu.peek(0)).toBe(261);
@@ -276,14 +269,6 @@ describe('VM Emulator Integration Tests - Project 8', () => {
   });
 
   it('runs Project8/Function Calls/StaticsTest Test Case', () => {
-    // Inject the bootstrap call so the VM starts by executing Sys.init
-    const bootstrapFile: VirtualFile = {
-      id: 'Bootstrap',
-      name: 'Bootstrap.vm',
-      language: 'vm',
-      content: 'call Sys.init 0'
-    };
-
     const sysFile: VirtualFile = {
       id: 'StaticsTestSys',
       name: 'Sys.vm',
@@ -305,7 +290,7 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       content: StaticsTestClass2Raw
     };
 
-    runIntegrationTest([bootstrapFile, sysFile, class1File, class2File], (e) => {
+    runIntegrationTest([sysFile, class1File, class2File], (e) => {
       // Start SP at 256. The bootstrap 'call' will push 5 frame values, 
       // leaving SP at 261 as required by the test before entering Sys.init.
       e.poke(0, 256);
@@ -320,7 +305,6 @@ describe('VM Emulator Integration Tests - Project 8', () => {
   it('runs Project8/Function Calls/StaticsTest Test Case (Catenated Files)', () => {
     // Combine all contents into a single massive string, separated by newlines
     const catenatedContent = [
-      'call Sys.init 0', 
       StaticsTestSysRaw, 
       StaticsTestClass1Raw, 
       StaticsTestClass2Raw

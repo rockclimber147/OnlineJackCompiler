@@ -24,6 +24,10 @@ export class SymbolTable {
     this.functions.set(functionName, { address, locals });
   }
 
+  public hasFunction(functionName: string): boolean {
+    return this.functions.has(functionName);
+  }
+
   public registerFileRange(fileName: string, startAddress: number): void {
     this.fileRanges.push({ startAddress, fileName });
     // Sort array to ensure the lookup logic works even if ranges are registered out of order
