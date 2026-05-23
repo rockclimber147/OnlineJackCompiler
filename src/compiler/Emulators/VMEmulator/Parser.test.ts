@@ -58,8 +58,8 @@ pop local 0`
         'pop local 0'
       ]);
 
-      // All 4 lines map exactly to lines 0, 1, 2, 3
-      expect(result.sourceMap).toEqual([0, 1, 2, 3]);
+      // All 4 lines map exactly to lines 1, 2, 3, 4
+      expect(result.sourceMap).toEqual([1, 2, 3, 4]);
     });
 
     it('strips pseudo-instructions (label/function) from ROM and updates SymbolTable', () => {
@@ -92,12 +92,12 @@ pop argument 0`
 
       // The source map should skip original lines 0 (comment), 1 (function), and 4 (label)
       expect(result.sourceMap).toEqual([
-        2, // push constant 0
-        3, // pop local 0
-        5, // push argument 0
-        6, // push constant 1
-        7, // sub
-        8  // pop argument 0
+        3, // push constant 0
+        4, // pop local 0
+        6, // push argument 0
+        7, // push constant 1
+        8, // sub
+        9  // pop argument 0
       ]);
 
       // Verify SymbolTable correctly stored the function
