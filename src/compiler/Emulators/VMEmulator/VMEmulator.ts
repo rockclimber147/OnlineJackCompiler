@@ -24,7 +24,7 @@ export class VMEmulator {
   private readonly STATIC_BASE = 16;
 
   constructor() {
-    this.ram[0] = 256; // Stack Pointer initialization
+    this.ram[0] = 256;
     this.initDispatchTables();
     this.initSegmentMap();
   }
