@@ -1,4 +1,4 @@
-export type TabType = "assembler" | "cpuemulator" | "vmtranslator" | "jackcompiler";
+export type TabType = "assembler" | "hackemulator" | "vmtranslator" | "vmemulator" | "jackcompiler";
 
 export interface LogMessage {
   text: string;
@@ -8,6 +8,7 @@ export interface LogMessage {
 export interface AssemblyResult {
   success: boolean;
   binary: string[];
+  sourceMap: number[];
   errors: CompilerError[];
 }
 

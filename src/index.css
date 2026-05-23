@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+.asm-line-highlight {
+  background-color: rgba(99, 102, 241, 0.3) !important;
+  border-left: 4px solid #818cf8 !important;
+}

@@ -1,0 +1,147 @@
+import { useState, useRef, useEffect } from "react";
+import { Group, Panel, Separator } from "react-resizable-panels";
+import * as monaco from "monaco-editor";
+import { useHackEmulator } from "../hooks/useHackEmulator";
+import { Assembler } from "../compiler/HackAssembler/Assembler";
+import { DebuggerCodeDisplay } from "../components/Emulator/DebuggerCodeDisplay";
+import type { CompilerError } from "../types/compiler";
+import { RegisterPanel } from "../components/Emulator/RegisterPanel";
+import { RamViewer } from "../components/Emulator/RamViewer";
+import { EmulatorScreen } from "../components/Emulator/EmulatorScreen";
+import RectASM from "../languages/hack/presets/rect.asm?raw"
+
+export function HackEmulatorPage() {
+  const { pc, registers, load, clearRam, step, getRamRange, setRam, isRunning, setIsRunning, speed, setSpeed, frameCount } = useHackEmulator();
+  const [source, setSource] = useState(RectASM);
+  const [errors, setErrors] = useState<CompilerError[]>([]);
+
+  const assembler = useRef(new Assembler());
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const decorationCollectionRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
+  const sourceMapRef = useRef<number[]>([]);
+  
+  const handleAssembleAndLoad = () => {
+    try {
+      const result = assembler.current.assemble(source);
+      setErrors(result.errors);
+      
+      if (result.success && result.binary) {
+        sourceMapRef.current = result.sourceMap;
+        const numericInstructions = result.binary.map((bin) => {
+          const val = parseInt(bin, 2);
+          return (val << 16) >> 16;
+        });
+        
+        load(numericInstructions);
+      } else {
+        console.error("Assembly errors:", result.errors);
+      }
+    } catch (e) {
+      console.error("Assembler crash:", e);
+      alert("Assembler encountered an error.");
+    }
+  };
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    const lineNumber = sourceMapRef.current[pc];
+
+    if (editor && lineNumber) {
+      if (!decorationCollectionRef.current) {
+        decorationCollectionRef.current = editor.createDecorationsCollection();
+      }
+
+      decorationCollectionRef.current.set([
+        {
+          range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+          options: {
+            isWholeLine: true,
+            className: 'asm-line-highlight',
+          },
+        },
+      ]);
+      
+      editor.revealLineInCenter(lineNumber);
+    }
+  }, [pc]);
+
+return (
+    <div className="h-full w-full bg-slate-900 text-slate-100 flex flex-col">
+      {/* Toolbar */}
+      <div className="h-12 border-b border-slate-800 flex items-center px-4 gap-2 bg-slate-950">
+        <button 
+          onClick={handleAssembleAndLoad} 
+          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-medium transition-colors"
+        >
+          Assemble & Load
+        </button>
+        <button 
+          onClick={step} 
+          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition-colors"
+        >
+          Step
+        </button>
+
+        <button 
+          onClick={() => setIsRunning(!isRunning)} 
+          className={`px-3 py-1 rounded text-sm font-medium ${isRunning ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+        >
+          {isRunning ? "Stop" : "Run"}
+        </button>
+
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <span>Speed:</span>
+          <input 
+            type="range" 
+            min="1" 
+            max="100" 
+            value={speed} 
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="w-24 accent-indigo-500"
+          />
+        </div>
+      </div>
+
+      <Group className="flex-1">
+        {/* Left: Code Editor */}
+        <Panel defaultSize={40}>
+          <DebuggerCodeDisplay 
+            title="Hack Assembly"
+            language="hackasm"
+            value={source}
+            onChange={setSource}
+            pc={pc}
+            sourceMap={sourceMapRef.current}
+            errors={errors}
+          />
+        </Panel>
+
+        <Separator className="w-1 bg-slate-800" />
+
+        {/* Center: Screen & Registers */}
+        <Panel defaultSize={30} className="p-4 flex flex-col gap-4">
+          {/* Screen at the top, fixed aspect ratio, not stretching */}
+          <div className="bg-slate-950 rounded border border-slate-800 p-1">
+            <EmulatorScreen 
+              getRamRange={getRamRange}
+              frameCount={frameCount}
+            />
+          </div>
+
+          {/* Registers pinned below the screen */}
+          <RegisterPanel pc={pc} registers={registers} />
+          
+          {/* Add a spacer to push everything to the top of the panel */}
+          <div className="flex-1" />
+        </Panel>
+
+        <Separator className="w-1 bg-slate-800" />
+
+        {/* Right: RAM Viewer */}
+        <Panel defaultSize={30}>
+          <RamViewer getRamRange={getRamRange} setRam={setRam} clearRam={clearRam} />
+        </Panel>
+      </Group>
+    </div>
+  );
+}
