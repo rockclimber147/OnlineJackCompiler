@@ -94,4 +94,72 @@ describe('VMEmulator - Function Calls', () => {
     expect(emu.peek(0)).toBe(257);
     expect(emu.peek(256)).toBe(0);
   });
+
+  it('pushes to the call stack on call and pops on return', () => {
+    const code = `
+      call Simple.func 0
+      label END
+      goto END
+
+      function Simple.func 0
+      push constant 0
+      return
+    `;
+    
+    const file: VirtualFile = { id: '3', name: 'Test.vm', language: 'vm', content: code };
+    emu.loadProgram([file]);
+    emu.poke(0, 256); // SP
+
+    expect(emu.getCallStack()).toEqual([]);
+
+    emu.executeNextInstruction(); // execute: call Simple.func 0
+    expect(emu.getCallStack()).toEqual(['Simple.func']);
+
+    emu.executeNextInstruction(); // execute: push constant 0
+    expect(emu.getCallStack()).toEqual(['Simple.func']);
+
+    emu.executeNextInstruction(); // execute: return
+    expect(emu.getCallStack()).toEqual([]);
+  });
+
+  it('maintains the call stack accurately during nested function calls', () => {
+    const code = `
+      call Outer.func 0
+      label END
+      goto END
+
+      function Outer.func 0
+      call Inner.func 0
+      push constant 0
+      return
+
+      function Inner.func 0
+      push constant 0
+      return
+    `;
+    
+    const file: VirtualFile = { id: '4', name: 'Test.vm', language: 'vm', content: code };
+    emu.loadProgram([file]);
+    emu.poke(0, 256); // SP
+
+    expect(emu.getCallStack()).toEqual([]);
+
+    emu.executeNextInstruction(); // execute: call Outer.func 0
+    expect(emu.getCallStack()).toEqual(['Outer.func']);
+
+    emu.executeNextInstruction(); // execute: call Inner.func 0
+    expect(emu.getCallStack()).toEqual(['Outer.func', 'Inner.func']);
+
+    emu.executeNextInstruction(); // execute: push constant 0 (inside Inner.func)
+    emu.executeNextInstruction(); // execute: return (from Inner.func)
+    
+    // Stack should unwind back to Outer.func
+    expect(emu.getCallStack()).toEqual(['Outer.func']);
+
+    emu.executeNextInstruction(); // execute: push constant 0 (inside Outer.func)
+    emu.executeNextInstruction(); // execute: return (from Outer.func)
+
+    // Stack should be fully empty
+    expect(emu.getCallStack()).toEqual([]);
+  });
 });

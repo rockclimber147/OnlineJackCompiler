@@ -11,7 +11,8 @@ export class VMEmulator {
   private binaryOps = new Map<string, () => void>();
   private unaryOps = new Map<string, () => void>();
   private segmentMap = new Map<string, Segment>();
-  
+  private callStack: String[] = [];
+
   public symbolTable = new SymbolTable();
   public sourceMap: number[] = [];
 
@@ -225,6 +226,7 @@ export class VMEmulator {
   private executeFunctionCall(decoded: DecodedInstruction): void {
     const functionName = decoded.command!;
     const numArgs = decoded.value!;
+    this.callStack.push(functionName);
     
     // Look up the function in the symbol table to get its ROM address and local count
     const entry = this.symbolTable.getFunctionAddress(functionName);
@@ -254,6 +256,7 @@ export class VMEmulator {
   }
 
   private executeReturn(_decoded: DecodedInstruction): void {
+    this.callStack.pop();
     const endFrame = this.ram[this.LCL_PTR];
     
     // Gets the return address (saved just before the frame pointers)
@@ -273,6 +276,10 @@ export class VMEmulator {
 
     // Jump back to the caller
     this.program_counter = retAddr;
+  }
+
+  public getCallStack(): String[] {
+    return [...this.callStack];
   }
 
   private peekLocal(index: number): number { return this.ram[this.ram[this.LCL_PTR] + index]; }
