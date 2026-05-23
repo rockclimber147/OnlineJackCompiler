@@ -9,6 +9,12 @@ import StaticTestRaw from '../test/Project7/MemoryAccess/StaticTest/StaticTest.v
 import SimpleAddRaw from '../test/Project7/StackArithmetic/SimpleAdd/SimpleAdd.vm?raw';
 import StackTestRaw from '../test/Project7/StackArithmetic/StackTest/StackTest.vm?raw';
 
+
+
+import BasicLoopRaw from '../test/Project8/Program Flow/BasicLoop/BasicLoop.vm?raw';
+import FibonacciSeriesRaw from '../test/Project8/Program Flow/FibonacciSeries/FibonacciSeries.vm?raw';
+
+
 describe('VM Emulator Integration Tests - Project 7', () => {
   let emu: VMEmulator;
 
@@ -131,3 +137,65 @@ describe('VM Emulator Integration Tests - Project 7', () => {
   }); 
 });
 
+describe('VM Emulator Integration Tests - Project 8', () => {
+  let emu: VMEmulator;
+  beforeEach(() => {
+    emu = new VMEmulator();
+  });
+
+  const runIntegrationTest = (
+    files: VirtualFile[],
+    setup: (e: VMEmulator) => void,
+    cycles: number
+  ) => {
+    emu.loadProgram(files);
+    setup(emu);
+
+    for (let i = 0; i < cycles; i++) {
+      emu.executeNextInstruction();
+    }
+  };
+  
+it('runs Project8/Program Flow/BasicLoop Test Case', () => {
+    const basicLoopFile: VirtualFile = {
+      id: 'BasicLoop',
+      name: 'BasicLoop.vm',
+      language: 'vm',
+      content: BasicLoopRaw
+    };
+
+    runIntegrationTest([basicLoopFile], (e) => {
+      e.poke(0, 256);
+      e.poke(1, 300);
+      e.poke(2, 400);
+      e.poke(400, 3);
+    }, 600);
+
+    expect(emu.peek(0)).toBe(257);
+    expect(emu.peek(256)).toBe(6);
+  });
+
+  it('runs Project8/Program Flow/FibonacciSeries Test Case', () => {
+    const fibonacciSeriesFile: VirtualFile = {
+      id: 'FibonacciSeries',
+      name: 'FibonacciSeries.vm',
+      language: 'vm',
+      content: FibonacciSeriesRaw
+    };
+
+    runIntegrationTest([fibonacciSeriesFile], (e) => {
+      e.poke(0, 256);
+      e.poke(1, 300);
+      e.poke(2, 400);
+      e.poke(400, 6);
+      e.poke(401, 3000);
+    }, 1100);
+
+    expect(emu.peek(3000)).toBe(0);
+    expect(emu.peek(3001)).toBe(1);
+    expect(emu.peek(3002)).toBe(1);
+    expect(emu.peek(3003)).toBe(2);
+    expect(emu.peek(3004)).toBe(3);
+    expect(emu.peek(3005)).toBe(5);
+  });
+});
