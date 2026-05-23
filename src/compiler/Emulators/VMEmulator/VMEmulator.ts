@@ -4,6 +4,14 @@ import { SymbolTable } from "./SymbolTable";
 import { InstructionType, type DecodedInstruction, Segment } from "./types";
 
 export class VMEmulator {
+  private readonly STACK_POINTER = 0;
+  private readonly LCL_PTR = 1;
+  private readonly ARG_PTR = 2;
+  private readonly THIS_PTR = 3;
+  private readonly THAT_PTR = 4;
+  private readonly TEMP_BASE = 5;
+  private readonly STATIC_BASE = 16;
+
   private ram = new Int16Array(32768);
   private rom: string[] = [];
   private program_counter = 0;
@@ -12,17 +20,11 @@ export class VMEmulator {
   private unaryOps = new Map<string, () => void>();
   private segmentMap = new Map<string, Segment>();
   private callStack: String[] = [];
+  private staticMap: Map<string, number> = new Map();
+  private nextStaticAddress: number = this.STATIC_BASE;
 
   public symbolTable = new SymbolTable();
   public sourceMap: number[] = [];
-
-  private readonly STACK_POINTER = 0;
-  private readonly LCL_PTR = 1;
-  private readonly ARG_PTR = 2;
-  private readonly THIS_PTR = 3;
-  private readonly THAT_PTR = 4;
-  private readonly TEMP_BASE = 5;
-  private readonly STATIC_BASE = 16;
 
   constructor() {
     this.ram[0] = 256;
@@ -32,6 +34,8 @@ export class VMEmulator {
   
   public loadProgram(files: VirtualFile[]): void {
     this.symbolTable.clear();
+    this.staticMap.clear();
+    this.nextStaticAddress = this.STATIC_BASE;
 
     const { instructions, sourceMap } = VMParser.parse(files, this.symbolTable);
 
@@ -208,6 +212,29 @@ export class VMEmulator {
     }
   }
 
+  private getStaticAddress(index: number): number {
+    // 1. Determine file scope from the current function
+    let fileScope = 'Global'; // Fallback for simple files without functions
+    if (this.callStack.length > 0) {
+      const currentFunction = this.callStack[this.callStack.length - 1];
+      // Extracts "Class1" from "Class1.set"
+      fileScope = currentFunction.split('.')[0]; 
+    }
+
+    // 2. Create the unique variable name (e.g., "Class1.0")
+    const staticKey = `${fileScope}.${index}`;
+
+    // 3. Allocate a RAM address if this is the first time we've seen it
+    if (!this.staticMap.has(staticKey)) {
+      if (this.nextStaticAddress > 255) {
+        throw new Error("Static segment overflow (exceeded RAM[255])");
+      }
+      this.staticMap.set(staticKey, this.nextStaticAddress++);
+    }
+
+    return this.staticMap.get(staticKey)!;
+  }
+
   private executeGoto(decoded: DecodedInstruction): void {
     const labelName = decoded.command!;
     // program_counter - 1 ensures we check the file scope of the current instruction
@@ -300,6 +327,13 @@ export class VMEmulator {
   private peekTemp(index: number): number { return this.ram[this.TEMP_BASE + index]; }
   private pokeTemp(index: number, val: number): void { this.ram[this.TEMP_BASE + index] = val; }
 
-  private peekStatic(index: number): number { return this.ram[this.STATIC_BASE + index]; }
-  private pokeStatic(index: number, val: number): void { this.ram[this.STATIC_BASE + index] = val; }
+  private peekStatic(index: number): number {
+    const addr = this.getStaticAddress(index);
+    return this.ram[addr];
+  }
+
+  private pokeStatic(index: number, val: number): void {
+    const addr = this.getStaticAddress(index);
+    this.ram[addr] = val;
+  }
 }
