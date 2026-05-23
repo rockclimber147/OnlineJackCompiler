@@ -9,7 +9,12 @@ import StaticTestRaw from '../test/Project7/MemoryAccess/StaticTest/StaticTest.v
 import SimpleAddRaw from '../test/Project7/StackArithmetic/SimpleAdd/SimpleAdd.vm?raw';
 import StackTestRaw from '../test/Project7/StackArithmetic/StackTest/StackTest.vm?raw';
 
+import FibonacciMain from '../test/Project8/Function Calls/FibonacciElement/Main.vm?raw';
+import FibonacciSys from '../test/Project8/Function Calls/FibonacciElement/Sys.vm?raw';
 
+import NestedCallRaw from '../test/Project8/Function Calls/NestedCall/Sys.hack?raw';
+import SimpleFunctionRaw from '../test/Project8/Function Calls/SimpleFunction/SimpleFunction.hack?raw';
+import StaticsTestRaw from '../test/Project8/Function Calls/StaticsTest/StaticsTest.hack?raw';
 
 import BasicLoopRaw from '../test/Project8/Program Flow/BasicLoop/BasicLoop.vm?raw';
 import FibonacciSeriesRaw from '../test/Project8/Program Flow/FibonacciSeries/FibonacciSeries.vm?raw';
@@ -155,8 +160,41 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       emu.executeNextInstruction();
     }
   };
+
+  it('runs Project8/Function Calls/FibonacciElement Test Case', () => {
+    // Inject the bootstrap call so the VM starts by executing Sys.init
+    const bootstrapFile: VirtualFile = {
+      id: 'Bootstrap',
+      name: 'Bootstrap.vm',
+      language: 'vm',
+      content: 'call Sys.init 0'
+    };
+    
+    const mainFile: VirtualFile = {
+      id: 'FibonacciMain',
+      name: 'Main.vm',
+      language: 'vm',
+      content: FibonacciMain
+    };
+
+    const sysFile: VirtualFile = {
+      id: 'FibonacciSys',
+      name: 'Sys.vm',
+      language: 'vm',
+      content: FibonacciSys
+    };
+
+    runIntegrationTest([bootstrapFile, mainFile, sysFile], (e) => {
+      // Start SP at 256. The bootstrap 'call' will push 5 values, leaving SP at 261 
+      // exactly as the official .tst file expects before entering Sys.init.
+      e.poke(0, 256); 
+    }, 111); // 110 cycles (from the .tst file) + 1 cycle for our manual bootstrap call
+
+    expect(emu.peek(0)).toBe(262);
+    expect(emu.peek(261)).toBe(3);
+  });
   
-it('runs Project8/Program Flow/BasicLoop Test Case', () => {
+  it('runs Project8/Program Flow/BasicLoop Test Case', () => {
     const basicLoopFile: VirtualFile = {
       id: 'BasicLoop',
       name: 'BasicLoop.vm',
