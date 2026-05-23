@@ -22,79 +22,79 @@ describe('SymbolTable', () => {
     });
   });
 
-  describe('File Ranges and PC Resolution', () => {
-    it('correctly maps a Program Counter to the corresponding file name', () => {
-      symbolTable.registerFileRange('Sys.vm', 0);
-      symbolTable.registerFileRange('Main.vm', 15);
-      symbolTable.registerFileRange('Math.vm', 40);
+  describe('Scope Ranges and PC Resolution', () => {
+    it('correctly maps a Program Counter to the corresponding scope name', () => {
+      symbolTable.registerScopeRange('Sys.init', 0);
+      symbolTable.registerScopeRange('Main.main', 15);
+      symbolTable.registerScopeRange('Math.multiply', 40);
 
-      // PC within the first file
-      expect(symbolTable.getFileNameFromPC(0)).toBe('Sys.vm');
-      expect(symbolTable.getFileNameFromPC(14)).toBe('Sys.vm');
+      // PC within the first scope
+      expect(symbolTable.getScopeFromPC(0)).toBe('Sys.init');
+      expect(symbolTable.getScopeFromPC(14)).toBe('Sys.init');
 
-      // PC exactly on the boundary of the second file
-      expect(symbolTable.getFileNameFromPC(15)).toBe('Main.vm');
+      // PC exactly on the boundary of the second scope
+      expect(symbolTable.getScopeFromPC(15)).toBe('Main.main');
       
-      // PC deep within the second file
-      expect(symbolTable.getFileNameFromPC(30)).toBe('Main.vm');
+      // PC deep within the second scope
+      expect(symbolTable.getScopeFromPC(30)).toBe('Main.main');
 
-      // PC in the last file and beyond
-      expect(symbolTable.getFileNameFromPC(40)).toBe('Math.vm');
-      expect(symbolTable.getFileNameFromPC(1000)).toBe('Math.vm');
+      // PC in the last scope and beyond
+      expect(symbolTable.getScopeFromPC(40)).toBe('Math.multiply');
+      expect(symbolTable.getScopeFromPC(1000)).toBe('Math.multiply');
     });
 
-    it('sorts file ranges correctly even if registered out of order', () => {
+    it('sorts scope ranges correctly even if registered out of order', () => {
       // Register in mixed order
-      symbolTable.registerFileRange('Math.vm', 40);
-      symbolTable.registerFileRange('Sys.vm', 0);
-      symbolTable.registerFileRange('Main.vm', 15);
+      symbolTable.registerScopeRange('Math.multiply', 40);
+      symbolTable.registerScopeRange('Sys.init', 0);
+      symbolTable.registerScopeRange('Main.main', 15);
 
-      expect(symbolTable.getFileNameFromPC(10)).toBe('Sys.vm');
-      expect(symbolTable.getFileNameFromPC(20)).toBe('Main.vm');
-      expect(symbolTable.getFileNameFromPC(50)).toBe('Math.vm');
+      expect(symbolTable.getScopeFromPC(10)).toBe('Sys.init');
+      expect(symbolTable.getScopeFromPC(20)).toBe('Main.main');
+      expect(symbolTable.getScopeFromPC(50)).toBe('Math.multiply');
     });
 
     it('returns empty string if no ranges are registered', () => {
-      expect(symbolTable.getFileNameFromPC(10)).toBe('');
+      expect(symbolTable.getScopeFromPC(10)).toBe('');
     });
   });
 
-  describe('Labels (File Scope)', () => {
-    it('resolves labels based on the current PC file context', () => {
-      // Setup files
-      symbolTable.registerFileRange('Main.vm', 0);
-      symbolTable.registerFileRange('Math.vm', 50);
+  describe('Labels (Function Scope)', () => {
+    it('resolves labels based on the current PC scope context', () => {
+      // Setup scopes
+      symbolTable.registerScopeRange('Main.main', 0);
+      symbolTable.registerScopeRange('Math.multiply', 50);
 
-      // Add labels with the SAME name but in different files
-      symbolTable.addLabel('Main.vm', 'LOOP', 12);
-      symbolTable.addLabel('Math.vm', 'LOOP', 65);
+      // Add labels with the SAME name but in different scopes
+      symbolTable.addLabel('Main.main', 'LOOP', 12);
+      symbolTable.addLabel('Math.multiply', 'LOOP', 65);
 
-      // If PC is 5, we are in Main.vm, so LOOP should resolve to 12
+      // If PC is 5, we are in Main.main, so LOOP should resolve to 12
       expect(symbolTable.getAddressFromLabel(5, 'LOOP')).toBe(12);
 
-      // If PC is 55, we are in Math.vm, so LOOP should resolve to 65
+      // If PC is 55, we are in Math.multiply, so LOOP should resolve to 65
       expect(symbolTable.getAddressFromLabel(55, 'LOOP')).toBe(65);
     });
 
-    it('throws an error if the label does not exist in the current file scope', () => {
-      symbolTable.registerFileRange('Main.vm', 0);
-      symbolTable.addLabel('Main.vm', 'START', 10);
+    it('throws an error if the label does not exist in the current scope', () => {
+      symbolTable.registerScopeRange('Main.main', 0);
+      symbolTable.addLabel('Main.main', 'START', 10);
 
-      expect(() => symbolTable.getAddressFromLabel(5, 'MISSING_LABEL')).toThrowError('Label not found: MISSING_LABEL');
+      expect(() => symbolTable.getAddressFromLabel(5, 'MISSING_LABEL')).toThrowError('Label not found: MISSING_LABEL in scope: Main.main');
     });
   });
 
   describe('clear()', () => {
     it('wipes all stored data', () => {
       symbolTable.addFunction('Sys.init', 0, 0);
-      symbolTable.registerFileRange('Main.vm', 0);
-      symbolTable.addLabel('Main.vm', 'LOOP', 5);
+      symbolTable.registerScopeRange('Main.main', 0);
+      symbolTable.addLabel('Main.main', 'LOOP', 5);
 
       symbolTable.clear();
 
       expect(() => symbolTable.getFunctionAddress('Sys.init')).toThrow();
       expect(() => symbolTable.getAddressFromLabel(0, 'LOOP')).toThrow();
-      expect(symbolTable.getFileNameFromPC(0)).toBe('');
+      expect(symbolTable.getScopeFromPC(0)).toBe('');
     });
   });
 });

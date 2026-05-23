@@ -23,8 +23,9 @@ public static parse(files: VirtualFile[], symbolTable: SymbolTable): VMParseResu
     let globalLineOffset = 0;
 
     for (const file of files) {
-      // Register where this file begins in the ROM (for labels scoping)
-      symbolTable.registerFileRange(file.name, instructions.length);
+      // 1. Scope defaults to the file name
+      let currentScope = file.name.split('.')[0]; 
+      symbolTable.registerScopeRange(currentScope, instructions.length);
 
       const cleanLines = VMParser.cleanCode(file.content);
 
@@ -33,15 +34,20 @@ public static parse(files: VirtualFile[], symbolTable: SymbolTable): VMParseResu
         const parts = text.split(/\s+/);
         const command = parts[0];
 
-        if (command === 'label') {
-          // Labels point to the next executable instruction. They are not added to ROM.
-          symbolTable.addLabel(file.name, parts[1], instructions.length);
-          
-        } else if (command === 'function') {
-          // Functions point to the next executable instruction. They are not added to ROM.
+        if (command === 'function') {
           const functionName = parts[1];
           const locals = parseInt(parts[2], 10);
+          
+          // 2. The scope is now the function name!
+          currentScope = functionName;
+          
+          // Register the new scope starting at this exact ROM address
+          symbolTable.registerScopeRange(currentScope, instructions.length);
           symbolTable.addFunction(functionName, instructions.length, locals);
+          
+        } else if (command === 'label') {
+          // 3. Add the label under the current active scope
+          symbolTable.addLabel(currentScope, parts[1], instructions.length);
           
         } else {
           instructions.push(text);

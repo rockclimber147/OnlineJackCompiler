@@ -3,21 +3,21 @@ export interface FunctionEntry {
   locals: number;
 }
 
-export interface FileRange {
+export interface ScopeRange {
   startAddress: number;
-  fileName: string;
+  scopeName: string;
 }
 
 export class SymbolTable {
   private labels = new Map<string, Map<string, number>>();
   private functions = new Map<string, FunctionEntry>();
-  private fileRanges: FileRange[] = [];
+  private scopeRanges: ScopeRange[] = [];
 
-  public addLabel(fileName: string, labelName: string, address: number): void {
-    if (!this.labels.has(fileName)) {
-      this.labels.set(fileName, new Map<string, number>());
+  public addLabel(scopeName: string, labelName: string, address: number): void {
+    if (!this.labels.has(scopeName)) {
+      this.labels.set(scopeName, new Map<string, number>());
     }
-    this.labels.get(fileName)!.set(labelName, address);
+    this.labels.get(scopeName)!.set(labelName, address);
   }
 
   public addFunction(functionName: string, address: number, locals: number): void {
@@ -28,35 +28,35 @@ export class SymbolTable {
     return this.functions.has(functionName);
   }
 
-  public registerFileRange(fileName: string, startAddress: number): void {
-    this.fileRanges.push({ startAddress, fileName });
-    // Sort array to ensure the lookup logic works even if ranges are registered out of order
-    this.fileRanges.sort((a, b) => a.startAddress - b.startAddress);
+  // REPLACED registerFileRange with registerScopeRange
+  public registerScopeRange(scopeName: string, startAddress: number): void {
+    this.scopeRanges.push({ startAddress, scopeName });
+    // Sort array to ensure the lookup logic works
+    this.scopeRanges.sort((a, b) => a.startAddress - b.startAddress);
   }
 
-  public getFileNameFromPC(pc: number): string {
-    if (this.fileRanges.length === 0) return "";
-    for (let i = this.fileRanges.length - 1; i >= 0; i--) {
-      if (this.fileRanges[i].startAddress <= pc) {
-        return this.fileRanges[i].fileName;
+  // REPLACED getFileNameFromPC with getScopeFromPC
+  public getScopeFromPC(pc: number): string {
+    if (this.scopeRanges.length === 0) return "";
+    for (let i = this.scopeRanges.length - 1; i >= 0; i--) {
+      if (this.scopeRanges[i].startAddress <= pc) {
+        return this.scopeRanges[i].scopeName;
       }
     }
-    
-    // Fallback if PC is somehow before the first registered range
-    return this.fileRanges[0].fileName;
+    return this.scopeRanges[0].scopeName;
   }
 
   public getAddressFromLabel(currentPC: number, labelName: string): number {
-    const currentFile = this.getFileNameFromPC(currentPC);
+    const currentScope = this.getScopeFromPC(currentPC);
     
-    const fileLabels = this.labels.get(currentFile);
-    if (fileLabels) {
-      const address = fileLabels.get(labelName);
+    const scopeLabels = this.labels.get(currentScope);
+    if (scopeLabels) {
+      const address = scopeLabels.get(labelName);
       if (address !== undefined) {
         return address;
       }
     }
-    throw new Error(`Label not found: ${labelName}`);
+    throw new Error(`Label not found: ${labelName} in scope: ${currentScope}`);
   }
 
   public getFunctionAddress(functionName: string): FunctionEntry {
@@ -70,6 +70,6 @@ export class SymbolTable {
   public clear(): void {
     this.labels.clear();
     this.functions.clear();
-    this.fileRanges = [];
+    this.scopeRanges = [];
   }
 }
