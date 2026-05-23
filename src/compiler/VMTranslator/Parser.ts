@@ -9,7 +9,7 @@ export class Parser {
     const rawLines = input.split(/\r?\n/);
     
     for (let i = 0; i < rawLines.length; i++) {
-      const raw = rawLines[i].trim();
+      const raw = rawLines[i];
       const text = raw.split("//")[0].trim();
       
       // Keep the line if it has code OR if it's a comment-only line
@@ -41,6 +41,10 @@ export class Parser {
 
   public currentLineText(): string {
     return this.lines[this.currentCommandIndex]?.text || "";
+  }
+
+  public currentLineRawText(): string {
+    return this.lines[this.currentCommandIndex]?.rawText || "";
   }
 
   // NEW: Expose the raw, unstripped text for the CodeWriter

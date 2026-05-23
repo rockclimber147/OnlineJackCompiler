@@ -154,7 +154,7 @@ export class VMTranslator {
 
   // Helper for consistent error formatting
   private addError(fileName: string, message: string, parser: Parser): void {
-    const text = parser.currentLineText();
+    const text = parser.currentLineRawText();
     this.errors.push({
       message: `[${fileName}] ${message}`,
       line: parser.currentLineNumber(),
