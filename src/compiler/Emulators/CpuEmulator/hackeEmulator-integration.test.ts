@@ -128,12 +128,11 @@ describe('Hack Emulator Integration Tests - Project 7', () => {
 });
 
 describe('Hack Emulator Integration Tests - Project 8', () => {
-it('runs Project8/FunctionCalls/FibonacciElement', () => {
+  it('runs Project8/FunctionCalls/FibonacciElement', () => {
     const emu = new HackEmulator();
     const commands = parseHackFile(FibonacciRaw);
     emu.loadProgram(commands);
 
-    // Run for 6000 cycles
     for (let i = 0; i < 6000; i++) {
       emu.executeNextInstruction();
     }

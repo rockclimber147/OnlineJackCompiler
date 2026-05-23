@@ -6,7 +6,10 @@ import BasicTestRaw from '../test/Project7/MemoryAccess/BasicTest/BasicTest.vm?r
 import PointerTestRaw from '../test/Project7/MemoryAccess/PointerTest/PointerTest.vm?raw';
 import StaticTestRaw from '../test/Project7/MemoryAccess/StaticTest/StaticTest.vm?raw';
 
-describe('VM Emulator Integration Tests (Project 7)', () => {
+import SimpleAddRaw from '../test/Project7/StackArithmetic/SimpleAdd/SimpleAdd.vm?raw';
+import StackTestRaw from '../test/Project7/StackArithmetic/StackTest/StackTest.vm?raw';
+
+describe('VM Emulator Integration Tests - Project 7', () => {
   let emu: VMEmulator;
 
   beforeEach(() => {
@@ -85,4 +88,46 @@ describe('VM Emulator Integration Tests (Project 7)', () => {
 
     expect(emu.peek(256)).toBe(1110);
   });
+
+  it('runs Project7/StackArithmetic/SimpleAdd Test Case', () => {
+    const simpleAddFile: VirtualFile = {
+      id: 'SimpleAdd',
+      name: 'SimpleAdd.vm',
+      language: 'vm',
+      content: SimpleAddRaw
+    };
+
+    runIntegrationTest([simpleAddFile], (e) => {
+      e.poke(0, 256);
+    }, 600);
+
+    expect(emu.peek(0)).toBe(257);
+    expect(emu.peek(256)).toBe(15);
+  });
+
+  it('runs Project7/StackArithmetic/StackTest Test Case', () => {
+    const stackTestFile: VirtualFile = {
+      id: 'StackTest',
+      name: 'StackTest.vm',
+      language: 'vm',
+      content: StackTestRaw
+    };
+
+    runIntegrationTest([stackTestFile], (e) => {
+      e.poke(0, 256);
+    }, 600);
+
+    expect(emu.peek(0)).toBe(266);
+    expect(emu.peek(256)).toBe(-1);
+    expect(emu.peek(257)).toBe(0);
+    expect(emu.peek(258)).toBe(0);
+    expect(emu.peek(259)).toBe(0);
+    expect(emu.peek(260)).toBe(-1);
+    expect(emu.peek(261)).toBe(0);
+    expect(emu.peek(262)).toBe(-1);
+    expect(emu.peek(263)).toBe(0);
+    expect(emu.peek(264)).toBe(0);
+    expect(emu.peek(265)).toBe(-91);
+  }); 
 });
+
