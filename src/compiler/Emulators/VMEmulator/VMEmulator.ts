@@ -163,6 +163,8 @@ export class VMEmulator {
       case InstructionType.BINARY_ARITHMETIC: this.binaryOps.get(decoded.command!)?.(); break;
       case InstructionType.GOTO: this.executeGoto(decoded); break;
       case InstructionType.IF_GOTO: this.executeIfGoto(decoded); break;
+      case InstructionType.FUNCTION_CALL: this.executeFunctionCall(decoded); break;
+      case InstructionType.RETURN: this.executeReturn(decoded); break;
     }
   }
 
@@ -218,6 +220,59 @@ export class VMEmulator {
       const labelName = decoded.command!;
       this.program_counter = this.symbolTable.getAddressFromLabel(this.program_counter - 1, labelName);
     }
+  }
+
+  private executeFunctionCall(decoded: DecodedInstruction): void {
+    const functionName = decoded.command!;
+    const numArgs = decoded.value!;
+    
+    // Look up the function in the symbol table to get its ROM address and local count
+    const entry = this.symbolTable.getFunctionAddress(functionName);
+
+    // 1. Push return address (this.program_counter is already pointing to the next instruction)
+    this.stackPush(this.program_counter);
+
+    // 2. Save the caller's frame (LCL, ARG, THIS, THAT)
+    this.stackPush(this.ram[this.LCL_PTR]);
+    this.stackPush(this.ram[this.ARG_PTR]);
+    this.stackPush(this.ram[this.THIS_PTR]);
+    this.stackPush(this.ram[this.THAT_PTR]);
+
+    // 3. Reposition ARG (SP - 5 - number of arguments)
+    this.ram[this.ARG_PTR] = this.ram[this.STACK_POINTER] - 5 - numArgs;
+
+    // 4. Reposition LCL (LCL = SP)
+    this.ram[this.LCL_PTR] = this.ram[this.STACK_POINTER];
+
+    // 5. Initialize local variables to 0
+    for (let i = 0; i < entry.locals; ++i) {
+      this.stackPush(0);
+    }
+
+    // 6. Jump to function execution
+    this.program_counter = entry.address;
+  }
+
+  private executeReturn(_decoded: DecodedInstruction): void {
+    const endFrame = this.ram[this.LCL_PTR];
+    
+    // Gets the return address (saved just before the frame pointers)
+    const retAddr = this.ram[endFrame - 5];
+    
+    // Pop the function's return value into the caller's ARG 0
+    this.ram[this.ram[this.ARG_PTR]] = this.stackPop();
+    
+    // Restore the caller's SP (right after the return value)
+    this.ram[this.STACK_POINTER] = this.ram[this.ARG_PTR] + 1;
+
+    // Restore the caller's frame pointers
+    this.ram[this.THAT_PTR] = this.ram[endFrame - 1];
+    this.ram[this.THIS_PTR] = this.ram[endFrame - 2];
+    this.ram[this.ARG_PTR]  = this.ram[endFrame - 3];
+    this.ram[this.LCL_PTR]  = this.ram[endFrame - 4];
+
+    // Jump back to the caller
+    this.program_counter = retAddr;
   }
 
   private peekLocal(index: number): number { return this.ram[this.ram[this.LCL_PTR] + index]; }
