@@ -9,13 +9,15 @@ import StaticTestRaw from '../test/Project7/MemoryAccess/StaticTest/StaticTest.v
 import SimpleAddRaw from '../test/Project7/StackArithmetic/SimpleAdd/SimpleAdd.vm?raw';
 import StackTestRaw from '../test/Project7/StackArithmetic/StackTest/StackTest.vm?raw';
 
-import FibonacciMain from '../test/Project8/Function Calls/FibonacciElement/Main.vm?raw';
-import FibonacciSys from '../test/Project8/Function Calls/FibonacciElement/Sys.vm?raw';
+import FibonacciMainRaw from '../test/Project8/Function Calls/FibonacciElement/Main.vm?raw';
+import FibonacciSysRaw from '../test/Project8/Function Calls/FibonacciElement/Sys.vm?raw';
 
 import NestedCallRaw from '../test/Project8/Function Calls/NestedCall/Sys.vm?raw';
 import SimpleFunctionRaw from '../test/Project8/Function Calls/SimpleFunction/SimpleFunction.vm?raw';
 
-import StaticsTestRaw from '../test/Project8/Function Calls/StaticsTest/StaticsTest.hack?raw';
+import StaticsTestSysRaw from '../test/Project8/Function Calls/StaticsTest/Sys.vm?raw';
+import StaticsTestClass1Raw from '../test/Project8/Function Calls/StaticsTest/Class1.vm?raw';
+import StaticsTestClass2Raw from '../test/Project8/Function Calls/StaticsTest/Class2.vm?raw';
 
 import BasicLoopRaw from '../test/Project8/Program Flow/BasicLoop/BasicLoop.vm?raw';
 import FibonacciSeriesRaw from '../test/Project8/Program Flow/FibonacciSeries/FibonacciSeries.vm?raw';
@@ -175,14 +177,14 @@ describe('VM Emulator Integration Tests - Project 8', () => {
       id: 'FibonacciMain',
       name: 'Main.vm',
       language: 'vm',
-      content: FibonacciMain
+      content: FibonacciMainRaw
     };
 
     const sysFile: VirtualFile = {
       id: 'FibonacciSys',
       name: 'Sys.vm',
       language: 'vm',
-      content: FibonacciSys
+      content: FibonacciSysRaw
     };
 
     runIntegrationTest([bootstrapFile, mainFile, sysFile], (e) => {
@@ -271,6 +273,48 @@ describe('VM Emulator Integration Tests - Project 8', () => {
     expect(emu.peek(3)).toBe(3010);  // THIS
     expect(emu.peek(4)).toBe(4010);  // THAT
     expect(emu.peek(310)).toBe(1196); // Return value
+  });
+
+  it('runs Project8/Function Calls/StaticsTest Test Case', () => {
+    // Inject the bootstrap call so the VM starts by executing Sys.init
+    const bootstrapFile: VirtualFile = {
+      id: 'Bootstrap',
+      name: 'Bootstrap.vm',
+      language: 'vm',
+      content: 'call Sys.init 0'
+    };
+
+    const sysFile: VirtualFile = {
+      id: 'StaticsTestSys',
+      name: 'Sys.vm',
+      language: 'vm',
+      content: StaticsTestSysRaw
+    };
+
+    const class1File: VirtualFile = {
+      id: 'StaticsTestClass1',
+      name: 'Class1.vm',
+      language: 'vm',
+      content: StaticsTestClass1Raw
+    };
+
+    const class2File: VirtualFile = {
+      id: 'StaticsTestClass2',
+      name: 'Class2.vm',
+      language: 'vm',
+      content: StaticsTestClass2Raw
+    };
+
+    runIntegrationTest([bootstrapFile, sysFile, class1File, class2File], (e) => {
+      // Start SP at 256. The bootstrap 'call' will push 5 frame values, 
+      // leaving SP at 261 as required by the test before entering Sys.init.
+      e.poke(0, 256);
+    }, 37); // 36 cycles (from .tst file) + 1 cycle for our bootstrap call
+
+    // Exact memory verifications from StaticsTest.cmp
+    expect(emu.peek(0)).toBe(263);
+    expect(emu.peek(261)).toBe(-2);
+    expect(emu.peek(262)).toBe(8);
   });
 
   it('runs Project8/Program Flow/BasicLoop Test Case', () => {
