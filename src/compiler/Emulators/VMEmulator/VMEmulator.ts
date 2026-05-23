@@ -14,12 +14,12 @@ export class VMEmulator {
 
   private ram = new Int16Array(32768);
   private rom: string[] = [];
-  private program_counter = 0;
+  public program_counter = 0;
   
   private binaryOps = new Map<string, () => void>();
   private unaryOps = new Map<string, () => void>();
   private segmentMap = new Map<string, Segment>();
-  private callStack: String[] = [];
+  private callStack: string[] = [];
   private staticMap: Map<string, number> = new Map();
   private nextStaticAddress: number = this.STATIC_BASE;
 
@@ -320,7 +320,7 @@ public loadProgram(files: VirtualFile[], skipBootstrap: boolean = false): void {
     this.program_counter = retAddr;
   }
 
-  public getCallStack(): String[] {
+  public getCallStack(): string[] {
     return [...this.callStack];
   }
 
