@@ -12,7 +12,7 @@ import StackTestRaw from '../test/Project7/StackArithmetic/StackTest/StackTest.v
 import FibonacciMain from '../test/Project8/Function Calls/FibonacciElement/Main.vm?raw';
 import FibonacciSys from '../test/Project8/Function Calls/FibonacciElement/Sys.vm?raw';
 
-import NestedCallRaw from '../test/Project8/Function Calls/NestedCall/Sys.hack?raw';
+import NestedCallRaw from '../test/Project8/Function Calls/NestedCall/Sys.vm?raw';
 import SimpleFunctionRaw from '../test/Project8/Function Calls/SimpleFunction/SimpleFunction.hack?raw';
 import StaticsTestRaw from '../test/Project8/Function Calls/StaticsTest/StaticsTest.hack?raw';
 
@@ -192,6 +192,49 @@ describe('VM Emulator Integration Tests - Project 8', () => {
 
     expect(emu.peek(0)).toBe(262);
     expect(emu.peek(261)).toBe(3);
+  });
+
+  it('runs Project8/Function Calls/NestedCall Test Case', () => {
+    const nestedCallFile: VirtualFile = {
+      id: 'NestedCall',
+      name: 'Sys.vm',
+      language: 'vm',
+      content: NestedCallRaw
+    };
+
+    runIntegrationTest([nestedCallFile], (e) => {
+      // Base pointers
+      e.poke(0, 261); // SP
+      e.poke(1, 261); // LCL
+      e.poke(2, 256); // ARG
+      e.poke(3, -3);  // THIS
+      e.poke(4, -4);  // THAT
+      
+      // Temp variables testing
+      e.poke(5, -1);
+      e.poke(6, -1);
+
+      // Fake stack frame from call Sys.init
+      e.poke(256, 1234);
+      e.poke(257, -1);
+      e.poke(258, -2);
+      e.poke(259, -3);
+      e.poke(260, -4);
+
+      // Initialize stack to -1 to check for local segment being cleared to zero.
+      for (let i = 261; i <= 299; i++) {
+        e.poke(i, -1);
+      }
+    }, 50);
+
+    // Exact memory verifications from NestedCall.cmp
+    expect(emu.peek(0)).toBe(261);
+    expect(emu.peek(1)).toBe(261);
+    expect(emu.peek(2)).toBe(256);
+    expect(emu.peek(3)).toBe(4000);
+    expect(emu.peek(4)).toBe(5000);
+    expect(emu.peek(5)).toBe(135);
+    expect(emu.peek(6)).toBe(246);
   });
   
   it('runs Project8/Program Flow/BasicLoop Test Case', () => {
