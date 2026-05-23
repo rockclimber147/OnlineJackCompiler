@@ -161,47 +161,64 @@ export class VMEmulator {
       case InstructionType.POP: this.executePop(decoded); break;
       case InstructionType.UNARY_ARITHMETIC: this.unaryOps.get(decoded.command!)?.(); break;
       case InstructionType.BINARY_ARITHMETIC: this.binaryOps.get(decoded.command!)?.(); break;
+      case InstructionType.GOTO: this.executeGoto(decoded); break;
+      case InstructionType.IF_GOTO: this.executeIfGoto(decoded); break;
     }
   }
 
-private executePush(decoded: DecodedInstruction): void {
-  let valueToPush = 0;
-  const index = decoded.value!; 
+  private executePush(decoded: DecodedInstruction): void {
+    let valueToPush = 0;
+    const index = decoded.value!; 
 
-  switch (decoded.segment) {
-    case Segment.CONSTANT: valueToPush = index; break;
-    case Segment.LOCAL:    valueToPush = this.peekLocal(index); break;
-    case Segment.ARG:      valueToPush = this.peekArgument(index); break;
-    case Segment.THIS:     valueToPush = this.peekThis(index); break;
-    case Segment.THAT:     valueToPush = this.peekThat(index); break;
-    case Segment.POINTER:  valueToPush = this.peekPointer(index); break;
-    case Segment.TEMP:     valueToPush = this.peekTemp(index); break;
-    case Segment.STATIC:   valueToPush = this.peekStatic(index); break;
-    default: 
-      throw new Error(`Unknown segment for push: ${decoded.segment}`);
+    switch (decoded.segment) {
+      case Segment.CONSTANT: valueToPush = index; break;
+      case Segment.LOCAL:    valueToPush = this.peekLocal(index); break;
+      case Segment.ARG:      valueToPush = this.peekArgument(index); break;
+      case Segment.THIS:     valueToPush = this.peekThis(index); break;
+      case Segment.THAT:     valueToPush = this.peekThat(index); break;
+      case Segment.POINTER:  valueToPush = this.peekPointer(index); break;
+      case Segment.TEMP:     valueToPush = this.peekTemp(index); break;
+      case Segment.STATIC:   valueToPush = this.peekStatic(index); break;
+      default: 
+        throw new Error(`Unknown segment for push: ${decoded.segment}`);
+    }
+
+    this.stackPush(valueToPush);
   }
 
-  this.stackPush(valueToPush);
-}
+  private executePop(decoded: DecodedInstruction): void {
+    const val = this.stackPop();
+    const index = decoded.value!;
 
-private executePop(decoded: DecodedInstruction): void {
-  const val = this.stackPop();
-  const index = decoded.value!;
-
-  switch (decoded.segment) {
-    case Segment.CONSTANT: 
-      throw new Error("Cannot pop into constant segment");
-    case Segment.LOCAL:    this.pokeLocal(index, val); break;
-    case Segment.ARG:      this.pokeArgument(index, val); break;
-    case Segment.THIS:     this.pokeThis(index, val); break;
-    case Segment.THAT:     this.pokeThat(index, val); break;
-    case Segment.POINTER:  this.pokePointer(index, val); break;
-    case Segment.TEMP:     this.pokeTemp(index, val); break;
-    case Segment.STATIC:   this.pokeStatic(index, val); break;
-    default: 
-      throw new Error(`Unknown segment for pop: ${decoded.segment}`);
+    switch (decoded.segment) {
+      case Segment.CONSTANT: 
+        throw new Error("Cannot pop into constant segment");
+      case Segment.LOCAL:    this.pokeLocal(index, val); break;
+      case Segment.ARG:      this.pokeArgument(index, val); break;
+      case Segment.THIS:     this.pokeThis(index, val); break;
+      case Segment.THAT:     this.pokeThat(index, val); break;
+      case Segment.POINTER:  this.pokePointer(index, val); break;
+      case Segment.TEMP:     this.pokeTemp(index, val); break;
+      case Segment.STATIC:   this.pokeStatic(index, val); break;
+      default: 
+        throw new Error(`Unknown segment for pop: ${decoded.segment}`);
+    }
   }
-}
+
+  private executeGoto(decoded: DecodedInstruction): void {
+    const labelName = decoded.command!;
+    // program_counter - 1 ensures we check the file scope of the current instruction
+    this.program_counter = this.symbolTable.getAddressFromLabel(this.program_counter - 1, labelName);
+  }
+
+  private executeIfGoto(decoded: DecodedInstruction): void {
+    const condition = this.stackPop();
+    // In Hack, any non-zero value is treated as true for branching
+    if (condition !== 0) {
+      const labelName = decoded.command!;
+      this.program_counter = this.symbolTable.getAddressFromLabel(this.program_counter - 1, labelName);
+    }
+  }
 
   private peekLocal(index: number): number { return this.ram[this.ram[this.LCL_PTR] + index]; }
   private pokeLocal(index: number, val: number): void { this.ram[this.ram[this.LCL_PTR] + index] = val; }
