@@ -1,3 +1,6 @@
+import type { VirtualFile } from "../../../types/Vfs";
+import { VMParser } from "./Parser";
+import { SymbolTable } from "./SymbolTable";
 import { InstructionType, type DecodedInstruction, Segment } from "./types";
 
 export class VMEmulator {
@@ -9,6 +12,9 @@ export class VMEmulator {
   private unaryOps = new Map<string, () => void>();
   private segmentMap = new Map<string, Segment>();
   
+  public symbolTable = new SymbolTable();
+  public sourceMap: number[] = [];
+
   private readonly STACK_POINTER = 0;
   private readonly LCL_PTR = 1;
   private readonly ARG_PTR = 2;
@@ -21,6 +27,16 @@ export class VMEmulator {
     this.ram[0] = 256; // Stack Pointer initialization
     this.initDispatchTables();
     this.initSegmentMap();
+  }
+  
+  public loadProgram(file: VirtualFile): void {
+    this.symbolTable.clear();
+
+    const { instructions, sourceMap } = VMParser.parse(file, this.symbolTable);
+
+    this.rom = instructions;
+    this.sourceMap = sourceMap;
+    this.program_counter = 0;
   }
 
   public stackPush(val: number): void {

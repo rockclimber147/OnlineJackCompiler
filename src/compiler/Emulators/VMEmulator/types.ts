@@ -30,3 +30,13 @@ export interface DecodedInstruction {
   command?: string;
   value?: number;
 }
+
+export interface ParsedVMLine {
+  text: string;
+  originalLine: number;
+}
+
+export interface VMParseResult {
+  instructions: string[];
+  sourceMap: number[];
+}
