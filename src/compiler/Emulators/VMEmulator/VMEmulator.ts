@@ -29,10 +29,10 @@ export class VMEmulator {
     this.initSegmentMap();
   }
   
-  public loadProgram(file: VirtualFile): void {
+  public loadProgram(files: VirtualFile[]): void {
     this.symbolTable.clear();
 
-    const { instructions, sourceMap } = VMParser.parse(file, this.symbolTable);
+    const { instructions, sourceMap } = VMParser.parse(files, this.symbolTable);
 
     this.rom = instructions;
     this.sourceMap = sourceMap;

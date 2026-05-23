@@ -49,7 +49,7 @@ add // Add them together
 pop local 0`
       };
 
-      const result = VMParser.parse(file, symbolTable);
+      const result = VMParser.parse([file], symbolTable);
 
       expect(result.instructions).toEqual([
         'push constant 10',
@@ -78,7 +78,7 @@ sub
 pop argument 0`
       };
 
-      const result = VMParser.parse(file, symbolTable);
+      const result = VMParser.parse([file], symbolTable);
 
       // 'function' (line 1) and 'label' (line 4) are omitted from ROM
       expect(result.instructions).toEqual([
@@ -109,6 +109,31 @@ pop argument 0`
       // The label was declared right after 'pop local 0' (address 1), so it points to address 2
       const labelAddress = symbolTable.getAddressFromLabel(0, 'LOOP'); 
       expect(labelAddress).toBe(2);
+    });
+
+    it('handles multiple files correctly in the SymbolTable file ranges', () => {
+      const file1: VirtualFile = {
+        id: '1',
+        name: 'Main.vm',
+        language: 'vm',
+        content: `function Main.main 0
+push constant 5
+call Sys.init 1`
+      };
+
+      const file2: VirtualFile = {
+        id: '2',
+        name: 'Sys.vm',
+        language: 'vm',
+        content: `function Sys.init 1
+push argument 0
+label END
+goto END`
+      };
+
+      const result1 = VMParser.parse([file1, file2], symbolTable);
+      expect(result1.instructions).toHaveLength(4);
+      expect(symbolTable.getFunctionAddress('Main.main')).toEqual({ address: 0, locals: 0 });
     });
   });
 });

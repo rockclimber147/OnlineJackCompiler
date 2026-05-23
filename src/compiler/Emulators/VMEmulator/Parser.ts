@@ -17,37 +17,40 @@ export class VMParser {
     return cleanLines;
   }
 
-  public static parse(file: VirtualFile, symbolTable: SymbolTable): VMParseResult {
-    const cleanLines = VMParser.cleanCode(file.content);
-    
+public static parse(files: VirtualFile[], symbolTable: SymbolTable): VMParseResult {
     const instructions: string[] = [];
     const sourceMap: number[] = [];
+    let globalLineOffset = 0;
 
-    // Register where this file begins in the ROM (for labels scoping)
-    symbolTable.registerFileRange(file.name, instructions.length);
+    for (const file of files) {
+      // Register where this file begins in the ROM (for labels scoping)
+      symbolTable.registerFileRange(file.name, instructions.length);
 
-    for (let i = 0; i < cleanLines.length; i++) {
-      const { text, originalLine } = cleanLines[i];
-      const parts = text.split(/\s+/);
-      const command = parts[0];
+      const cleanLines = VMParser.cleanCode(file.content);
 
-      if (command === 'label') {
-        // Labels point to the next executable instruction. They are not added to ROM.
-        symbolTable.addLabel(file.name, parts[1], instructions.length);
-        
-      } else if (command === 'function') {
-        // Functions point to the next executable instruction. They are not added to ROM.
-        const functionName = parts[1];
-        const locals = parseInt(parts[2], 10);
-        symbolTable.addFunction(functionName, instructions.length, locals);
-        
-      } else {
-        // Executable instruction (push, pop, add, call, return, goto, etc.)
-        instructions.push(text);
-        
-        // CRITICAL: Push the mapping only when an executable instruction is generated
-        sourceMap.push(originalLine);
+      for (let i = 0; i < cleanLines.length; i++) {
+        const { text, originalLine } = cleanLines[i];
+        const parts = text.split(/\s+/);
+        const command = parts[0];
+
+        if (command === 'label') {
+          // Labels point to the next executable instruction. They are not added to ROM.
+          symbolTable.addLabel(file.name, parts[1], instructions.length);
+          
+        } else if (command === 'function') {
+          // Functions point to the next executable instruction. They are not added to ROM.
+          const functionName = parts[1];
+          const locals = parseInt(parts[2], 10);
+          symbolTable.addFunction(functionName, instructions.length, locals);
+          
+        } else {
+          instructions.push(text);
+          sourceMap.push(globalLineOffset + originalLine);
+        }
       }
+
+      const rawLinesCount = file.content.split(/\r?\n/).length;
+      globalLineOffset += rawLinesCount;
     }
 
     return { instructions, sourceMap };
