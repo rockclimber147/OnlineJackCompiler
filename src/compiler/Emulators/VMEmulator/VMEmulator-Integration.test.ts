@@ -13,7 +13,8 @@ import FibonacciMain from '../test/Project8/Function Calls/FibonacciElement/Main
 import FibonacciSys from '../test/Project8/Function Calls/FibonacciElement/Sys.vm?raw';
 
 import NestedCallRaw from '../test/Project8/Function Calls/NestedCall/Sys.vm?raw';
-import SimpleFunctionRaw from '../test/Project8/Function Calls/SimpleFunction/SimpleFunction.hack?raw';
+import SimpleFunctionRaw from '../test/Project8/Function Calls/SimpleFunction/SimpleFunction.vm?raw';
+
 import StaticsTestRaw from '../test/Project8/Function Calls/StaticsTest/StaticsTest.hack?raw';
 
 import BasicLoopRaw from '../test/Project8/Program Flow/BasicLoop/BasicLoop.vm?raw';
@@ -237,6 +238,41 @@ describe('VM Emulator Integration Tests - Project 8', () => {
     expect(emu.peek(6)).toBe(246);
   });
   
+  it('runs Project8/Function Calls/SimpleFunction Test Case', () => {
+    const simpleFunctionFile: VirtualFile = {
+      id: 'SimpleFunction',
+      name: 'SimpleFunction.vm',
+      language: 'vm',
+      content: SimpleFunctionRaw
+    };
+
+    runIntegrationTest([simpleFunctionFile], (e) => {
+      // Base pointers
+      e.poke(0, 317);  // SP
+      e.poke(1, 317);  // LCL
+      e.poke(2, 310);  // ARG
+      e.poke(3, 3000); // THIS
+      e.poke(4, 4000); // THAT
+
+      // Setup the arguments (and the fake caller frame) relative to the ARG pointer
+      e.poke(310, 1234); // argument[0]
+      e.poke(311, 37);   // argument[1]
+      e.poke(312, 9);    // argument[2]
+      e.poke(313, 305);  // argument[3] (fake saved LCL)
+      e.poke(314, 300);  // argument[4] (fake saved ARG)
+      e.poke(315, 3010); // argument[5] (fake saved THIS)
+      e.poke(316, 4010); // argument[6] (fake saved THAT)
+    }, 10);
+
+    // Exact memory verifications from SimpleFunction.cmp
+    expect(emu.peek(0)).toBe(311);   // SP
+    expect(emu.peek(1)).toBe(305);   // LCL
+    expect(emu.peek(2)).toBe(300);   // ARG
+    expect(emu.peek(3)).toBe(3010);  // THIS
+    expect(emu.peek(4)).toBe(4010);  // THAT
+    expect(emu.peek(310)).toBe(1196); // Return value
+  });
+
   it('runs Project8/Program Flow/BasicLoop Test Case', () => {
     const basicLoopFile: VirtualFile = {
       id: 'BasicLoop',
