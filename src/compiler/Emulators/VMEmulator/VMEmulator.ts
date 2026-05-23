@@ -9,7 +9,13 @@ export class VMEmulator {
   private unaryOps = new Map<string, () => void>();
   private segmentMap = new Map<string, Segment>();
   
-  private STACK_POINTER = 0;
+  private readonly STACK_POINTER = 0;
+  private readonly LCL_PTR = 1;
+  private readonly ARG_PTR = 2;
+  private readonly THIS_PTR = 3;
+  private readonly THAT_PTR = 4;
+  private readonly TEMP_BASE = 5;
+  private readonly STATIC_BASE = 16;
 
   constructor() {
     this.ram[0] = 256; // Stack Pointer initialization
@@ -135,10 +141,70 @@ export class VMEmulator {
 
   private execute(decoded: DecodedInstruction) {
     switch (decoded.type) {
-      // case InstructionType.PUSH: this.executePush(decoded); break;
-      // case InstructionType.POP: this.executePop(decoded); break;
-      // case InstructionType.UNARY_ARITHMETIC: this.unaryOps.get(decoded.command!)?.(); break;
-      // case InstructionType.BINARY_ARITHMETIC: this.binaryOps.get(decoded.command!)?.(); break;
+      case InstructionType.PUSH: this.executePush(decoded); break;
+      case InstructionType.POP: this.executePop(decoded); break;
+      case InstructionType.UNARY_ARITHMETIC: this.unaryOps.get(decoded.command!)?.(); break;
+      case InstructionType.BINARY_ARITHMETIC: this.binaryOps.get(decoded.command!)?.(); break;
     }
   }
+
+private executePush(decoded: DecodedInstruction): void {
+  let valueToPush = 0;
+  const index = decoded.value!; 
+
+  switch (decoded.segment) {
+    case Segment.CONSTANT: valueToPush = index; break;
+    case Segment.LOCAL:    valueToPush = this.peekLocal(index); break;
+    case Segment.ARG:      valueToPush = this.peekArgument(index); break;
+    case Segment.THIS:     valueToPush = this.peekThis(index); break;
+    case Segment.THAT:     valueToPush = this.peekThat(index); break;
+    case Segment.POINTER:  valueToPush = this.peekPointer(index); break;
+    case Segment.TEMP:     valueToPush = this.peekTemp(index); break;
+    case Segment.STATIC:   valueToPush = this.peekStatic(index); break;
+    default: 
+      throw new Error(`Unknown segment for push: ${decoded.segment}`);
+  }
+
+  this.stackPush(valueToPush);
+}
+
+private executePop(decoded: DecodedInstruction): void {
+  const val = this.stackPop();
+  const index = decoded.value!;
+
+  switch (decoded.segment) {
+    case Segment.CONSTANT: 
+      throw new Error("Cannot pop into constant segment");
+    case Segment.LOCAL:    this.pokeLocal(index, val); break;
+    case Segment.ARG:      this.pokeArgument(index, val); break;
+    case Segment.THIS:     this.pokeThis(index, val); break;
+    case Segment.THAT:     this.pokeThat(index, val); break;
+    case Segment.POINTER:  this.pokePointer(index, val); break;
+    case Segment.TEMP:     this.pokeTemp(index, val); break;
+    case Segment.STATIC:   this.pokeStatic(index, val); break;
+    default: 
+      throw new Error(`Unknown segment for pop: ${decoded.segment}`);
+  }
+}
+
+  private peekLocal(index: number): number { return this.ram[this.ram[this.LCL_PTR] + index]; }
+  private pokeLocal(index: number, val: number): void { this.ram[this.ram[this.LCL_PTR] + index] = val; }
+
+  private peekArgument(index: number): number { return this.ram[this.ram[this.ARG_PTR] + index]; }
+  private pokeArgument(index: number, val: number): void { this.ram[this.ram[this.ARG_PTR] + index] = val; }
+
+  private peekThis(index: number): number { return this.ram[this.ram[this.THIS_PTR] + index]; }
+  private pokeThis(index: number, val: number): void { this.ram[this.ram[this.THIS_PTR] + index] = val; }
+
+  private peekThat(index: number): number { return this.ram[this.ram[this.THAT_PTR] + index]; }
+  private pokeThat(index: number, val: number): void { this.ram[this.ram[this.THAT_PTR] + index] = val; }
+
+  private peekPointer(index: number): number { return this.ram[this.THIS_PTR + index]; }
+  private pokePointer(index: number, val: number): void { this.ram[this.THIS_PTR + index] = val; }
+
+  private peekTemp(index: number): number { return this.ram[this.TEMP_BASE + index]; }
+  private pokeTemp(index: number, val: number): void { this.ram[this.TEMP_BASE + index] = val; }
+
+  private peekStatic(index: number): number { return this.ram[this.STATIC_BASE + index]; }
+  private pokeStatic(index: number, val: number): void { this.ram[this.STATIC_BASE + index] = val; }
 }
