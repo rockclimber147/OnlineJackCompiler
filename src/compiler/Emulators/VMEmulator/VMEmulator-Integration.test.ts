@@ -317,6 +317,34 @@ describe('VM Emulator Integration Tests - Project 8', () => {
     expect(emu.peek(262)).toBe(8);
   });
 
+  it('runs Project8/Function Calls/StaticsTest Test Case (Catenated Files)', () => {
+    // Combine all contents into a single massive string, separated by newlines
+    const catenatedContent = [
+      'call Sys.init 0', 
+      StaticsTestSysRaw, 
+      StaticsTestClass1Raw, 
+      StaticsTestClass2Raw
+    ].join('\n');
+
+    const catenatedFile: VirtualFile = {
+      id: 'StaticsTestCatenated',
+      name: 'StaticsTestCatenated.vm',
+      language: 'vm',
+      content: catenatedContent
+    };
+
+    runIntegrationTest([catenatedFile], (e) => {
+      // Start SP at 256. The bootstrap 'call' will push 5 frame values, 
+      // leaving SP at 261 as required by the test before entering Sys.init.
+      e.poke(0, 256);
+    }, 37); // 36 cycles (from .tst file) + 1 cycle for our bootstrap call
+
+    // Exact memory verifications from StaticsTest.cmp
+    expect(emu.peek(0)).toBe(263);
+    expect(emu.peek(261)).toBe(-2);
+    expect(emu.peek(262)).toBe(8);
+  });
+
   it('runs Project8/Program Flow/BasicLoop Test Case', () => {
     const basicLoopFile: VirtualFile = {
       id: 'BasicLoop',
